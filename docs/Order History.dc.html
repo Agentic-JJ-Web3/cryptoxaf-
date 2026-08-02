@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0E1A16; --ink-2:#233029;
+  --vault:#1A5C48; --vault-deep:#12402F;
+  --live:#3FD08F;
+  --paper:#EDEFEA; --paper-2:#F6F7F3; --card:#FFFFFF;
+  --rule:#D2D7CE; --rule-soft:#E2E6DE;
+  --fee:#8A5F10; --fee-bg:#F6EEDC;
+  --fault:#A8382C; --fault-bg:#F8E9E7;
+  --muted:#5F6D65;
+  --sans:'Instrument Sans',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --ink:#EAEEE9; --ink-2:#B9C4BC;
+    --vault:#3FD08F; --vault-deep:#2AA972;
+    --live:#3FD08F;
+    --paper:#0B1512; --paper-2:#111C18; --card:#141F1A;
+    --rule:#2A3A33; --rule-soft:#1E2C26;
+    --fee:#D9A441; --fee-bg:#241D0F;
+    --fault:#E0796B; --fault-bg:#2A1512;
+    --muted:#8A968E;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);font-family:var(--sans)}
+a{color:inherit}
+a:hover{color:var(--vault)}
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:var(--paper);display:flex;justify-content:center">
+<div style="width:100%;max-width:430px;padding:0 20px 40px;color:var(--ink)">
+
+  <!-- MASTHEAD -->
+  <div style="display:flex;align-items:center;gap:10px;padding:24px 0 20px;border-bottom:1px solid var(--rule)">
+    <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true">
+      <rect x="2" y="2" width="28" height="28" rx="7" fill="var(--vault)"></rect>
+      <circle cx="2" cy="16" r="4.5" fill="var(--paper)"></circle>
+      <circle cx="30" cy="16" r="4.5" fill="var(--paper)"></circle>
+      <rect x="14" y="6" width="4" height="20" rx="2" fill="var(--paper-2)" transform="rotate(45 16 16)"></rect>
+      <rect x="14" y="6" width="4" height="20" rx="2" fill="var(--paper-2)" transform="rotate(-45 16 16)"></rect>
+    </svg>
+    <div style="font-size:18px;letter-spacing:-.01em">Crypto<b style="font-weight:600">XAF</b></div>
+  </div>
+
+  <!-- DEVICE-ONLY NOTICE -->
+  <div style="padding:16px 0;border-bottom:1px solid var(--rule-soft)">
+    <h1 style="font-size:19px;font-weight:600;margin:0">Order history</h1>
+    <p style="font-size:12px;color:var(--muted);line-height:1.6;margin:8px 0 0">Stored on this device only &mdash; there is no account, so nothing is saved on a server. Clearing your browser data or switching phones clears this list.</p>
+  </div>
+
+  <!-- EMPTY STATE -->
+  <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:40px 0;text-align:center">
+      <div style="font-size:15px;font-weight:600;color:var(--ink)">No orders yet on this device</div>
+      <p style="font-size:13px;color:var(--ink-2);line-height:1.6;margin:8px 0 20px">Your first swap will show up here, along with any wallet address you use, ready to reuse next time.</p>
+      <a href="#" style="display:inline-block;padding:13px 22px;border-radius:6px;background:var(--vault);color:var(--paper-2);font-size:14px;font-weight:600;text-decoration:none">Make your first order</a>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ hasHistory }}" hint-placeholder-val="{{ true }}">
+    <!-- SAVED ADDRESSES -->
+    <div style="padding:20px 0;border-bottom:1px solid var(--rule-soft)">
+      <div style="font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Saved addresses</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <sc-for list="{{ addresses }}" as="a" hint-placeholder-count="2">
+          <div style="display:flex;align-items:center;gap:12px;border:1px solid var(--rule);border-radius:8px;padding:12px 14px;background:var(--card)">
+            <div style="flex:1;min-width:0">
+              <span style="font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--vault);border:1px solid var(--vault);background:rgba(63,208,143,.1);padding:2px 6px;border-radius:3px">{{ a.chain }}</span>
+              <div style="font-family:var(--mono);font-size:13px;margin-top:6px;word-break:break-all">
+                <span style="color:var(--ink);font-weight:500">{{ a.head }}</span><span style="color:var(--rule)">{{ a.mid }}</span><span style="color:var(--ink);font-weight:500">{{ a.tail }}</span>
+              </div>
+            </div>
+            <button style="flex:none;border:1px solid var(--rule);background:var(--paper-2);border-radius:6px;padding:9px 14px;font-size:12px;font-weight:600;color:var(--ink-2);cursor:pointer">Use</button>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- PAST ORDERS -->
+    <div style="padding:20px 0;border-bottom:1px solid var(--rule-soft)">
+      <div style="font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Past orders</div>
+      <div style="display:flex;flex-direction:column">
+        <sc-for list="{{ orders }}" as="o" hint-placeholder-count="5">
+          <button style="display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:14px 0;border:0;border-bottom:1px solid var(--rule-soft);background:transparent;text-align:left;cursor:pointer">
+            <div style="min-width:0">
+              <div style="font-family:var(--mono);font-size:13px;font-weight:500;color:var(--ink)">{{ o.ref }}</div>
+              <div style="font-size:12px;color:var(--muted);margin-top:3px" class="tab">{{ o.date }} &middot; {{ o.amount }} XAF &middot; {{ o.chain }}</div>
+            </div>
+            <div style="flex:none;font-size:12px;font-weight:600;color:{{ o.stateColor }};text-align:right">{{ o.stateLabel }}</div>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- CLEAR HISTORY -->
+    <div style="padding-top:18px">
+      <sc-if value="{{ notConfirmingClear }}" hint-placeholder-val="{{ true }}">
+        <button onclick="{{ onOpenClear }}" style="font-size:13px;font-weight:500;color:var(--muted);background:transparent;border:0;padding:0;cursor:pointer;text-decoration:underline">Clear history on this device</button>
+      </sc-if>
+      <sc-if value="{{ confirmingClear }}" hint-placeholder-val="{{ false }}">
+        <div style="border:1px solid var(--rule);border-radius:8px;padding:14px 16px;background:var(--card)">
+          <p style="font-size:13px;color:var(--ink-2);line-height:1.6;margin:0 0 12px">Clear all saved addresses and past orders on this device. This can't be undone.</p>
+          <div style="display:flex;gap:10px">
+            <button onclick="{{ onCancelClear }}" style="flex:1;padding:12px;border:1px solid var(--rule);border-radius:6px;background:var(--paper-2);color:var(--ink-2);font-size:13px;font-weight:500;cursor:pointer">Cancel</button>
+            <button onclick="{{ onConfirmClear }}" style="flex:1;padding:12px;border:0;border-radius:6px;background:var(--fault);color:#fff;font-size:13px;font-weight:600;cursor:pointer">Clear everything</button>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+
+</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:430,&quot;height&quot;:900},&quot;hasHistory&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Simulate&quot;}}">
+class Component extends DCLogic {
+  state = { confirmingClear: false };
+
+  onOpenClear() { this.setState({ confirmingClear: true }); }
+  onCancelClear() { this.setState({ confirmingClear: false }); }
+  onConfirmClear() { this.setState({ confirmingClear: false, cleared: true }); }
+
+  renderVals() {
+    var hasHistory = this.props.hasHistory !== false && !this.state.cleared;
+
+    var addresses = [
+      { chain: 'TRC-20', address: 'TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE' },
+      { chain: 'BEP-20', address: '0x9F3c2E7a1B4d8C6f0A2e5D9b3C7f1A4e8D2b6C0f' }
+    ].map(function (a) { return { chain: a.chain, head: a.address.slice(0, 6), mid: a.address.slice(6, -6), tail: a.address.slice(-6) }; });
+
+    var stateMeta = {
+      sent: { label: 'USDT sent', color: 'var(--live)' },
+      checking: { label: 'Checking payment', color: 'var(--muted)' },
+      waiting: { label: 'Waiting for payment', color: 'var(--muted)' },
+      refund: { label: 'Refund sent', color: 'var(--fault)' }
+    };
+    var fmt = function (n) { return n.toLocaleString('en-US'); };
+    var raw = [
+      { ref: 'CXF-7K2M', date: 'Jul 31', amount: 32500, chain: 'BEP-20', state: 'checking' },
+      { ref: 'CXF-4L8R', date: 'Jul 28', amount: 50000, chain: 'TRC-20', state: 'sent' },
+      { ref: 'CXF-9P3Q', date: 'Jul 22', amount: 15000, chain: 'BEP-20', state: 'sent' },
+      { ref: 'CXF-2W6T', date: 'Jul 14', amount: 8000, chain: 'BEP-20', state: 'refund' },
+      { ref: 'CXF-6H5F', date: 'Jul 9', amount: 21000, chain: 'TRC-20', state: 'sent' }
+    ];
+    var orders = raw.map(function (o) {
+      var m = stateMeta[o.state];
+      return { ref: o.ref, date: o.date, amount: fmt(o.amount), chain: o.chain, stateLabel: m.label, stateColor: m.color };
+    });
+
+    return {
+      isEmpty: !hasHistory, hasHistory: hasHistory,
+      addresses: addresses, orders: orders,
+      notConfirmingClear: !this.state.confirmingClear, confirmingClear: this.state.confirmingClear,
+      onOpenClear: this.onOpenClear.bind(this),
+      onCancelClear: this.onCancelClear.bind(this),
+      onConfirmClear: this.onConfirmClear.bind(this)
+    };
+  }
+}
+
+</script>
+</body>
+</html>

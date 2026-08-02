@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0E1A16; --ink-2:#233029;
+  --vault:#1A5C48; --vault-deep:#12402F;
+  --live:#3FD08F;
+  --paper:#EDEFEA; --paper-2:#F6F7F3; --card:#FFFFFF;
+  --rule:#D2D7CE; --rule-soft:#E2E6DE;
+  --fee:#8A5F10; --fee-bg:#F6EEDC;
+  --fault:#A8382C; --fault-bg:#F8E9E7;
+  --muted:#5F6D65;
+  --sans:'Instrument Sans',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --ink:#EAEEE9; --ink-2:#B9C4BC;
+    --vault:#3FD08F; --vault-deep:#2AA972;
+    --live:#3FD08F;
+    --paper:#0B1512; --paper-2:#111C18; --card:#141F1A;
+    --rule:#2A3A33; --rule-soft:#1E2C26;
+    --fee:#D9A441; --fee-bg:#241D0F;
+    --fault:#E0796B; --fault-bg:#2A1512;
+    --muted:#8A968E;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);font-family:var(--sans)}
+a{color:inherit}
+a:hover{color:var(--vault)}
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:var(--paper);display:flex;justify-content:center">
+<div style="width:100%;max-width:430px;padding:0 20px 40px;color:var(--ink)">
+
+  <!-- MASTHEAD -->
+  <div style="display:flex;align-items:center;gap:10px;padding:24px 0 20px;border-bottom:1px solid var(--rule)">
+    <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true">
+      <rect x="2" y="2" width="28" height="28" rx="7" fill="var(--vault)"></rect>
+      <circle cx="2" cy="16" r="4.5" fill="var(--paper)"></circle>
+      <circle cx="30" cy="16" r="4.5" fill="var(--paper)"></circle>
+      <rect x="14" y="6" width="4" height="20" rx="2" fill="var(--paper-2)" transform="rotate(45 16 16)"></rect>
+      <rect x="14" y="6" width="4" height="20" rx="2" fill="var(--paper-2)" transform="rotate(-45 16 16)"></rect>
+    </svg>
+    <div style="font-size:18px;letter-spacing:-.01em">Crypto<b style="font-weight:600">XAF</b></div>
+  </div>
+
+  <div style="padding:20px 0 6px">
+    <h1 style="font-size:20px;font-weight:600;letter-spacing:-.01em;margin:0">How it works</h1>
+    <p style="font-size:13px;color:var(--ink-2);line-height:1.6;margin:8px 0 0">Every number below is the actual number. Nothing here is a promotional rate.</p>
+  </div>
+
+  <!-- PRICING -->
+  <div style="padding:18px 0;border-top:1px solid var(--rule-soft)">
+    <div style="font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Pricing</div>
+    <p style="font-size:13px;color:var(--ink-2);line-height:1.6;margin:0 0 16px">We quote above the market rate. The gap between the two is our entire fee &mdash; there is no other charge hidden in the number.</p>
+
+    <div style="background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:20px 18px">
+      <div style="display:flex;align-items:baseline;font-size:13px;padding:5px 0">
+        <span style="color:var(--muted);white-space:nowrap">Market rate</span>
+        <span style="flex:1;border-bottom:1px dotted var(--rule);margin:0 8px;transform:translateY(-4px);min-width:14px"></span>
+        <span style="color:var(--ink-2);white-space:nowrap" class="tab">{{ marketRate }} XAF</span>
+      </div>
+      <div style="display:flex;align-items:baseline;font-size:13px;padding:5px 0">
+        <span style="color:var(--muted);white-space:nowrap">Our rate</span>
+        <span style="flex:1;border-bottom:1px dotted var(--rule);margin:0 8px;transform:translateY(-4px);min-width:14px"></span>
+        <span style="color:var(--ink-2);white-space:nowrap" class="tab">{{ ourRate }} XAF</span>
+      </div>
+      <div style="display:flex;align-items:baseline;font-size:13px;padding:5px 0">
+        <span style="color:var(--muted);white-space:nowrap">Our margin</span>
+        <span style="flex:1;border-bottom:1px dotted var(--rule);margin:0 8px;transform:translateY(-4px);min-width:14px"></span>
+        <span style="color:var(--fee);white-space:nowrap" class="tab">{{ marginDisplay }} XAF ({{ marginPct }})</span>
+      </div>
+    </div>
+
+    <p style="font-size:12px;color:var(--muted);line-height:1.6;margin:14px 0 8px">Worked example &middot; sending {{ examplePaid }} XAF on BEP-20</p>
+    <div style="background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:20px 18px">
+      <div style="display:flex;align-items:baseline;font-size:13px;padding:5px 0">
+        <span style="color:var(--muted);white-space:nowrap">Rate</span>
+        <span style="flex:1;border-bottom:1px dotted var(--rule);margin:0 8px;transform:translateY(-4px);min-width:14px"></span>
+        <span style="color:var(--ink-2);white-space:nowrap" class="tab">{{ ourRate }} XAF</span>
+      </div>
+      <div style="display:flex;align-items:baseline;font-size:13px;padding:5px 0">
+        <span style="color:var(--muted);white-space:nowrap">Network fee</span>
+        <span style="flex:1;border-bottom:1px dotted var(--rule);margin:0 8px;transform:translateY(-4px);min-width:14px"></span>
+        <span style="color:var(--fee);white-space:nowrap" class="tab">{{ exampleFee }} XAF</span>
+      </div>
+      <div style="display:flex;align-items:baseline;font-size:13px;padding:5px 0">
+        <span style="color:var(--muted);white-space:nowrap">Amount paid</span>
+        <span style="flex:1;border-bottom:1px dotted var(--rule);margin:0 8px;transform:translateY(-4px);min-width:14px"></span>
+        <span style="color:var(--ink-2);white-space:nowrap" class="tab">{{ examplePaid }} XAF</span>
+      </div>
+      <div style="position:relative;height:18px;margin:10px -18px 8px">
+        <div style="position:absolute;top:9px;left:18px;right:18px;height:1px;background:repeating-linear-gradient(to right,var(--rule) 0 5px,transparent 5px 11px)"></div>
+        <div style="position:absolute;top:2px;left:-8px;width:15px;height:15px;border-radius:50%;background:var(--paper);border:1px solid var(--rule)"></div>
+        <div style="position:absolute;top:2px;right:-8px;width:15px;height:15px;border-radius:50%;background:var(--paper);border:1px solid var(--rule)"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <span style="font-size:13px;font-weight:500;color:var(--ink)">You receive</span>
+        <span style="font-size:24px;font-weight:600;letter-spacing:-.02em;color:var(--ink)" class="tab">{{ exampleOut }} <span style="font-size:13px;font-weight:400;color:var(--muted)">USDT</span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIVE RATES / CHAINS -->
+  <div style="padding:18px 0;border-top:1px solid var(--rule-soft)">
+    <div style="font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Live rates by network</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="border:1px solid var(--rule);border-radius:8px;padding:14px 16px;position:relative">
+        <span style="position:absolute;top:-7px;right:12px;background:var(--fee-bg);color:var(--fee);font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:2px 6px;border-radius:3px;border:1px solid var(--fee)">Cheapest</span>
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:14px;font-weight:600">BEP-20</span><span style="font-family:var(--mono);font-size:13px;color:var(--ink-2)" class="tab">{{ ourRate }} XAF</span></div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--fee);margin-top:4px">Network fee 120 XAF</div>
+        <p style="font-size:12px;color:var(--ink-2);line-height:1.5;margin:8px 0 0">BNB Smart Chain. Our cheaper network fee. Confirm your wallet shows a BEP-20 or BSC balance &mdash; sending to an Ethereum-only address loses the funds permanently.</p>
+      </div>
+      <div style="border:1px solid var(--rule);border-radius:8px;padding:14px 16px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:14px;font-weight:600">TRC-20</span><span style="font-family:var(--mono);font-size:13px;color:var(--ink-2)" class="tab">{{ ourRate }} XAF</span></div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--fee);margin-top:4px">Network fee 450 XAF</div>
+        <p style="font-size:12px;color:var(--ink-2);line-height:1.5;margin:8px 0 0">Tron. Widely supported by wallets and exchanges. Our fee is higher here because Tron network costs more for us to cover today.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTLEMENT -->
+  <div style="padding:18px 0;border-top:1px solid var(--rule-soft)">
+    <div style="font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Settlement</div>
+    <p style="font-size:13px;color:var(--ink-2);line-height:1.6;margin:0">Orders settle in 5&ndash;15 minutes, Monday to Saturday, 7am to 9pm. Outside those hours your order waits in the queue and is settled first thing when we reopen &mdash; it is not lost or cancelled.</p>
+  </div>
+
+  <!-- WHAT IF SOMETHING GOES WRONG -->
+  <div style="padding:18px 0;border-top:1px solid var(--rule-soft)">
+    <div style="font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">If something goes wrong</div>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--ink)">You send the wrong XAF amount</div>
+        <p style="font-size:13px;color:var(--ink-2);line-height:1.6;margin:4px 0 0">We match payments by MoMo reference, not amount alone. Message support with your order reference and we adjust the payout or refund the difference.</p>
+      </div>
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--ink)">Your wallet address was wrong for the chain</div>
+        <p style="font-size:13px;color:var(--ink-2);line-height:1.6;margin:4px 0 0">We can't send to an address that doesn't match its chain. Your payment is refunded to the MoMo number it came from, usually within 30 minutes.</p>
+      </div>
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--ink)">You pay after the rate expires</div>
+        <p style="font-size:13px;color:var(--ink-2);line-height:1.6;margin:4px 0 0">We settle at the rate active when your payment arrives, not the one you saw on screen. Message support before paying if you want a fresh quote instead.</p>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding-top:14px">
+    <a href="#" style="font-size:13px;font-weight:600;color:var(--vault);text-decoration:none">Start a swap &rarr;</a>
+  </div>
+
+</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:430,&quot;height&quot;:1400},&quot;marketRate&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:620,&quot;min&quot;:400,&quot;max&quot;:900,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Simulate&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    var fmt = function (n) { return n.toLocaleString('en-US'); };
+    var MARKET = this.props.marketRate || 620, MARGIN = 0.029;
+    var rate = Math.round(MARKET * (1 + MARGIN));
+    var margin = rate - MARKET;
+    var PAID = 32500, fee = 120;
+    var out = (Math.max(PAID - fee, 0) / rate).toFixed(2);
+
+    return {
+      marketRate: fmt(MARKET),
+      ourRate: fmt(rate),
+      marginDisplay: fmt(margin),
+      marginPct: '+' + (MARGIN * 100).toFixed(1) + '%',
+      examplePaid: fmt(PAID),
+      exampleFee: fmt(fee),
+      exampleOut: out
+    };
+  }
+}
+
+</script>
+</body>
+</html>

@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CryptoXAF — Identity & Design System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0E1A16;
+  --ink-2:#233029;
+  --vault:#1A5C48;
+  --vault-deep:#12402F;
+  --live:#3FD08F;
+  --paper:#EDEFEA;
+  --paper-2:#F6F7F3;
+  --card:#FFFFFF;
+  --rule:#D2D7CE;
+  --rule-soft:#E2E6DE;
+  --fee:#8A5F10;
+  --fee-bg:#F6EEDC;
+  --fault:#A8382C;
+  --fault-bg:#F8E9E7;
+  --muted:#5F6D65;
+  --sans:'Instrument Sans',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --col:440px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --ink:#EAEEE9; --ink-2:#B9C4BC;
+    --vault:#3FD08F; --vault-deep:#2AA972;
+    --live:#3FD08F;
+    --paper:#0B1512; --paper-2:#111C18;
+    --card:#141F1A;
+    --rule:#2A3A33; --rule-soft:#1E2C26;
+    --fee:#D9A441; --fee-bg:#241D0F;
+    --fault:#E0796B; --fault-bg:#2A1512;
+    --muted:#8A968E;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:var(--paper);color:var(--ink);
+  font-family:var(--sans);font-size:16px;line-height:1.6;
+  font-feature-settings:'ss01';
+  padding:0 20px 100px;
+}
+.wrap{max-width:860px;margin:0 auto}
+.mono{font-family:var(--mono);font-variant-ligatures:none}
+.tab{font-variant-numeric:tabular-nums}
+
+/* ---- masthead ---- */
+header{padding:72px 0 40px;border-bottom:1px solid var(--rule)}
+.wordmark{font-size:34px;letter-spacing:-.02em;font-weight:400;color:var(--ink)}
+.wordmark b{font-weight:600}
+.thesis{max-width:52ch;margin-top:22px;color:var(--ink-2);font-size:17px}
+.thesis em{font-style:normal;color:var(--ink);font-weight:500}
+
+/* ---- section scaffolding ---- */
+section{padding:52px 0;border-bottom:1px solid var(--rule-soft)}
+.eyebrow{
+  font-family:var(--mono);font-size:11px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:10px;
+}
+h2{font-size:22px;font-weight:600;letter-spacing:-.01em;margin-bottom:8px}
+.lede{color:var(--ink-2);max-width:60ch;margin-bottom:28px}
+
+/* ---- swatches ---- */
+.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.sw{border:1px solid var(--rule);border-radius:6px;overflow:hidden;background:var(--card)}
+.sw .chip{height:76px}
+.sw .meta{padding:10px 12px}
+.sw .nm{font-size:13px;font-weight:500}
+.sw .hx{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.sw .use{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.4}
+
+/* ---- type specimens ---- */
+.spec{border:1px solid var(--rule);border-radius:6px;background:var(--card);padding:22px;margin-bottom:12px}
+.spec .tag{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.08em;margin-bottom:14px;text-transform:uppercase}
+.s-amount{font-size:40px;font-weight:600;letter-spacing:-.025em}
+.s-amount span{font-size:19px;font-weight:400;color:var(--muted);margin-left:6px;letter-spacing:0}
+.s-hash{font-family:var(--mono);font-size:14px;word-break:break-all;color:var(--ink-2)}
+.rule-note{display:flex;gap:10px;margin-top:16px;padding-top:16px;border-top:1px dashed var(--rule);
+  font-size:13px;color:var(--muted);max-width:56ch}
+.rule-note b{color:var(--ink);font-weight:500}
+
+/* ---- THE RECEIPT (signature element) ---- */
+.receipt{
+  max-width:var(--col);background:var(--card);
+  border:1px solid var(--rule);border-radius:10px;
+  padding:26px 24px 22px;position:relative;
+}
+.r-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:20px}
+.r-title{font-size:13px;font-weight:600;letter-spacing:.01em}
+.r-ref{font-family:var(--mono);font-size:12px;color:var(--muted)}
+
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;letter-spacing:.01em}
+.input{
+  display:flex;align-items:center;gap:8px;
+  border:1px solid var(--rule);border-radius:6px;background:var(--paper-2);
+  padding:11px 13px;transition:border-color .15s;
+}
+.input:focus-within{border-color:var(--vault)}
+.input input{
+  border:0;background:transparent;color:var(--ink);width:100%;outline:none;
+  font-family:var(--sans);font-size:21px;font-weight:600;font-variant-numeric:tabular-nums;
+  letter-spacing:-.015em;
+}
+.input input.addr{font-family:var(--mono);font-size:13px;font-weight:400;letter-spacing:0}
+.input .unit{font-size:13px;color:var(--muted);font-weight:500;white-space:nowrap}
+
+/* chain selector — cost as a feature */
+.chains{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}
+.chain{
+  border:1px solid var(--rule);border-radius:6px;background:var(--paper-2);
+  padding:11px 12px;cursor:pointer;text-align:left;font-family:var(--sans);
+  transition:border-color .15s,background .15s;position:relative;
+}
+.chain:hover{border-color:var(--ink-2)}
+.chain[aria-pressed="true"]{border-color:var(--vault);background:var(--card);box-shadow:inset 0 0 0 1px var(--vault)}
+.chain .cn{font-size:13px;font-weight:600;color:var(--ink);display:block}
+.chain .cf{font-family:var(--mono);font-size:11px;color:var(--fee);margin-top:3px;display:block}
+.best{
+  position:absolute;top:-7px;right:9px;background:var(--fee-bg);color:var(--fee);
+  font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+  padding:2px 6px;border-radius:3px;border:1px solid var(--fee);
+}
+.chain[disabled]{opacity:.35;cursor:not-allowed}
+.chain[disabled]:hover{border-color:var(--rule)}
+
+/* address detection feedback */
+.detect{font-size:12px;margin-top:8px;line-height:1.55;display:none}
+.detect.on{display:block}
+.detect .tagchip{
+  font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+  padding:2px 6px;border-radius:3px;border:1px solid;margin-right:7px;white-space:nowrap;
+}
+.detect.ok{color:var(--muted)}
+.detect.ok .tagchip{color:var(--vault);border-color:var(--vault);background:rgba(63,208,143,.1)}
+.detect.bad{color:var(--fault)}
+.detect.bad .tagchip{color:var(--fault);border-color:var(--fault);background:var(--fault-bg)}
+.detect .verify{display:block;margin-top:7px;font-family:var(--mono);font-size:12px;color:var(--ink-2)}
+.detect .verify b{background:var(--fee-bg);color:var(--fee);padding:1px 4px;border-radius:2px;font-weight:500}
+.confirm{
+  display:flex;gap:9px;align-items:flex-start;margin:14px 0 2px;padding:11px 12px;
+  border:1px solid var(--fee);background:var(--fee-bg);border-radius:6px;font-size:12px;color:var(--fee);
+  line-height:1.5;
+}
+.confirm input{margin-top:2px;accent-color:var(--fee);flex:none}
+.confirm.hide{display:none}
+
+/* ledger with dot leaders */
+.ledger{margin-top:4px}
+.lrow{display:flex;align-items:baseline;font-size:13px;padding:5px 0}
+.lrow .lk{color:var(--muted);white-space:nowrap}
+.lrow .dots{flex:1;border-bottom:1px dotted var(--rule);margin:0 8px;transform:translateY(-4px);min-width:14px}
+.lrow .lv{font-variant-numeric:tabular-nums;color:var(--ink-2);white-space:nowrap}
+.lrow .lv small{color:var(--muted);font-size:11px;margin-left:5px}
+.lrow.cost .lv{color:var(--fee)}
+
+/* perforation */
+.perf{position:relative;height:18px;margin:14px -24px 10px}
+.perf::before{
+  content:"";position:absolute;top:9px;left:24px;right:24px;height:1px;
+  background:repeating-linear-gradient(to right,var(--rule) 0 5px,transparent 5px 11px);
+}
+.perf i{position:absolute;top:2px;width:15px;height:15px;border-radius:50%;background:var(--paper);
+  border:1px solid var(--rule)}
+.perf i.l{left:-8px}
+.perf i.r{right:-8px}
+
+.total{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+.total .tk{font-size:13px;font-weight:500}
+.total .tv{font-size:29px;font-weight:600;letter-spacing:-.025em;font-variant-numeric:tabular-nums}
+.total .tv span{font-size:15px;font-weight:400;color:var(--muted);margin-left:5px;letter-spacing:0}
+
+.cta{
+  width:100%;margin-top:16px;padding:14px;border:0;border-radius:6px;
+  background:var(--vault);color:var(--paper-2);
+  font-family:var(--sans);font-size:15px;font-weight:600;cursor:pointer;letter-spacing:.01em;
+  transition:background .15s;
+}
+@media (prefers-color-scheme:dark){.cta{color:#0B1512}}
+.cta:hover{background:var(--vault-deep)}
+.cta:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.settle{text-align:center;font-size:12px;color:var(--muted);margin-top:11px}
+
+/* live rate strip */
+.ticker{
+  display:inline-flex;align-items:center;gap:7px;margin-bottom:18px;
+  font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.02em;
+}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--live);flex:none}
+@media (prefers-reduced-motion:no-preference){
+  .dot{animation:pulse 2.4s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.28}}
+}
+
+/* ---- status system ---- */
+.statuses{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:22px}
+.pill{
+  display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;
+  font-size:12px;font-weight:500;border:1px solid;
+}
+.p-wait{background:var(--paper-2);color:var(--muted);border-color:var(--rule)}
+.p-check{background:var(--fee-bg);color:var(--fee);border-color:var(--fee)}
+.p-done{background:rgba(63,208,143,.12);color:var(--vault);border-color:var(--vault)}
+.p-fail{background:var(--fault-bg);color:var(--fault);border-color:var(--fault)}
+.pill .b{width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+
+/* ---- voice table ---- */
+.voice{border:1px solid var(--rule);border-radius:6px;overflow:hidden;background:var(--card)}
+.vrow{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--rule-soft)}
+.vrow:last-child{border-bottom:0}
+.vc{padding:14px 16px;font-size:14px}
+.vc:first-child{border-right:1px solid var(--rule-soft);color:var(--fault)}
+.vc:last-child{color:var(--ink)}
+.vc .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);display:block;margin-bottom:5px}
+@media(max-width:560px){
+  .vrow{grid-template-columns:1fr}
+  .vc:first-child{border-right:0;border-bottom:1px solid var(--rule-soft)}
+  .chains{grid-template-columns:1fr}
+}
+footer{padding:40px 0;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="wordmark">Crypto<b>XAF</b></div>
+  <p class="thesis">The product asks a stranger to send money before they receive anything. In a market where that is usually a scam, the interface is doing the persuading. So it borrows from the two documents Cameroonians already trust without thinking — <em>the MoMo SMS receipt</em> and <em>the block explorer</em>. Both are plain, machine-made and unembellished. Neither tries to sell you anything. Neither has ever needed to.</p>
+</header>
+
+<section>
+  <div class="eyebrow">01 — Palette</div>
+  <h2>Intaglio</h2>
+  <p class="lede">Drawn from engraved currency ink rather than crypto convention. Deliberately neutral between MTN yellow and Orange orange — the platform cannot look like it belongs to either network.</p>
+  <div class="swatches">
+    <div class="sw"><div class="chip" style="background:#0E1A16"></div><div class="meta"><div class="nm">Ink</div><div class="hx">#0E1A16</div><div class="use">Body text, headings</div></div></div>
+    <div class="sw"><div class="chip" style="background:#1A5C48"></div><div class="meta"><div class="nm">Vault</div><div class="hx">#1A5C48</div><div class="use">Primary actions, focus</div></div></div>
+    <div class="sw"><div class="chip" style="background:#3FD08F"></div><div class="meta"><div class="nm">Live</div><div class="hx">#3FD08F</div><div class="use">Live rates, confirmed only</div></div></div>
+    <div class="sw"><div class="chip" style="background:#EDEFEA;border-bottom:1px solid #D2D7CE"></div><div class="meta"><div class="nm">Paper</div><div class="hx">#EDEFEA</div><div class="use">Page ground</div></div></div>
+    <div class="sw"><div class="chip" style="background:#8A5F10"></div><div class="meta"><div class="nm">Ochre</div><div class="hx">#8A5F10</div><div class="use">Costs and fees only</div></div></div>
+    <div class="sw"><div class="chip" style="background:#A8382C"></div><div class="meta"><div class="nm">Fault</div><div class="hx">#A8382C</div><div class="use">Failures, refunds due</div></div></div>
+  </div>
+  <div class="rule-note"><b>Discipline:</b> Live mint appears only when something is genuinely live or genuinely finished. If it shows up as decoration, it stops meaning anything, and the one moment it must land — payout confirmed — lands flat.</div>
+</section>
+
+<section>
+  <div class="eyebrow">02 — Typography</div>
+  <h2>One rule, learned without being told</h2>
+  <p class="lede">Instrument Sans for interface and money. IBM Plex Mono for anything a machine will read back.</p>
+
+  <div class="spec">
+    <div class="tag">Instrument Sans · tabular figures · money</div>
+    <div class="s-amount tab">50.28 <span>USDT</span></div>
+    <div class="s-amount tab" style="font-size:26px;margin-top:6px">32,500 <span>XAF</span></div>
+  </div>
+
+  <div class="spec">
+    <div class="tag">IBM Plex Mono · machine identifiers</div>
+    <div class="s-hash">TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE</div>
+    <div class="s-hash" style="margin-top:7px">CXF-7K2M · MP240731.4471.882610</div>
+  </div>
+
+  <div class="rule-note"><b>Why it works:</b> Monospace reads as <i>copy this exactly, a machine will check it</i>. Sans reads as <i>this is your money</i>. Users absorb the distinction in one transaction and never mistype an address into a field that looks like a price.</div>
+</section>
+
+<section>
+  <div class="eyebrow">03 — Signature element</div>
+  <h2>The receipt</h2>
+  <p class="lede">Every cost is a line item. Nothing is folded into a quietly worse rate. Type an amount and watch the arithmetic move — that transparency is the entire competitive position against a Telegram exchanger, so it gets to be the memorable thing on the page.</p>
+
+  <div class="ticker"><span class="dot"></span><span id="tick">Market 620 XAF · updated 12s ago</span></div>
+
+  <div class="receipt">
+    <div class="r-head"><div class="r-title">Buy USDT</div><div class="r-ref">CXF-7K2M</div></div>
+
+    <div class="field">
+      <label for="amt">You pay</label>
+      <div class="input"><input id="amt" type="text" inputmode="numeric" value="32,500" aria-label="Amount in XAF"><span class="unit">XAF</span></div>
+    </div>
+
+    <div class="field">
+      <label for="addr">Send to wallet</label>
+      <div class="input"><input id="addr" class="addr" type="text" value="TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE" aria-label="Wallet address" spellcheck="false" autocapitalize="off"></div>
+      <div class="detect" id="detect" role="status"></div>
+    </div>
+
+    <div class="chains">
+      <button class="chain" id="c-bep" aria-pressed="false" onclick="pick('bep')">
+        <span class="best">Cheapest</span>
+        <span class="cn">BEP-20</span><span class="cf">Network fee 120 XAF</span>
+      </button>
+      <button class="chain" id="c-trc" aria-pressed="true" onclick="pick('trc')">
+        <span class="cn">TRC-20</span><span class="cf">Network fee 450 XAF</span>
+      </button>
+    </div>
+
+    <label class="confirm hide" id="evm-confirm">
+      <input type="checkbox">
+      <span>A <b>0x</b> address exists on every EVM chain. Confirm your wallet or exchange accepts USDT on <b>BNB Smart Chain</b>. Sent to an Ethereum-only deposit address, it will not arrive.</span>
+    </label>
+
+    <div class="ledger">
+      <div class="lrow"><span class="lk">Rate</span><span class="dots"></span><span class="lv tab" id="l-rate">638 XAF<small>market +2.9%</small></span></div>
+      <div class="lrow cost"><span class="lk">Network fee</span><span class="dots"></span><span class="lv tab" id="l-fee">120 XAF</span></div>
+      <div class="lrow"><span class="lk">Rate held</span><span class="dots"></span><span class="lv tab">15 minutes</span></div>
+    </div>
+
+    <div class="perf"><i class="l"></i><i class="r"></i></div>
+
+    <div class="total"><span class="tk">You receive</span><span class="tv tab" id="l-out">50.75 <span>USDT</span></span></div>
+    <button class="cta">Continue to payment</button>
+    <div class="settle">Settles in 5–15 minutes · Mon–Sat, 7am–9pm</div>
+  </div>
+
+  <div class="rule-note" style="max-width:var(--col)"><b>The perforation</b> separates what leaves your hands from what arrives. It is the only ornament in the system, and it earns its place by marking the moment the transaction actually turns over.</div>
+</section>
+
+<section>
+  <div class="eyebrow">04 — Status</div>
+  <h2>Say where the order is, always</h2>
+  <p class="lede">Manual settlement means people wait. Silence during a wait is what makes a platform feel like a scam, so every state is named in the customer's terms — never in the system's.</p>
+  <div class="statuses">
+    <span class="pill p-wait"><span class="b"></span>Waiting for your payment</span>
+    <span class="pill p-check"><span class="b"></span>Checking your payment</span>
+    <span class="pill p-done"><span class="b"></span>USDT sent</span>
+    <span class="pill p-fail"><span class="b"></span>Refund on the way</span>
+  </div>
+  <div class="rule-note"><b>Never ship:</b> <span class="mono">PAYMENT_CLAIMED</span>, <span class="mono">PENDING_PAYOUT</span>, <span class="mono">TX_BROADCAST</span>. Those are your state machine's names for things. The person waiting has no idea what they mean and reads them as evasion.</div>
+</section>
+
+<section>
+  <div class="eyebrow">05 — Voice</div>
+  <h2>Never promise what you cannot control</h2>
+  <p class="lede">You settle by hand, at least at first. Copy that overstates speed converts once and then produces a furious customer, which in this market is the only marketing that actually travels.</p>
+  <div class="voice">
+    <div class="vrow">
+      <div class="vc"><span class="lbl">Don't</span>Instant! Get your USDT in seconds 🚀</div>
+      <div class="vc"><span class="lbl">Do</span>Settles in 5–15 minutes. We'll text you when it's sent.</div>
+    </div>
+    <div class="vrow">
+      <div class="vc"><span class="lbl">Don't</span>100% safe and guaranteed exchange</div>
+      <div class="vc"><span class="lbl">Do</span>Every fee is shown before you pay. Nothing is added after.</div>
+    </div>
+    <div class="vrow">
+      <div class="vc"><span class="lbl">Don't</span>Oops! Something went wrong 😅</div>
+      <div class="vc"><span class="lbl">Do</span>That address isn't valid on BEP-20. Check it and try again.</div>
+    </div>
+    <div class="vrow">
+      <div class="vc"><span class="lbl">Don't</span>Best rates in Cameroon!!!</div>
+      <div class="vc"><span class="lbl">Do</span>Market rate 620. Ours 638. The difference is our fee.</div>
+    </div>
+  </div>
+  <div class="rule-note"><b>Register:</b> sentence case everywhere, no exclamation marks, no emoji, no urgency it didn't earn. Errors state what happened and what to do next — they never apologise and they are never vague.</div>
+</section>
+
+<footer>CryptoXAF · identity and design system · v1</footer>
+</div>
+
+<script>
+var MARKET=620,MARGIN=0.029,fees={bep:120,trc:450},chain='trc';
+
+function detect(a){
+  a=(a||'').trim();
+  if(!a) return {k:'none'};
+  if(/^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(a)) return {k:'trc'};
+  if(/^0x[a-fA-F0-9]{40}$/.test(a)) return {k:'bep'};
+  if(/^T/.test(a)) return {k:'bad',m:'Tron addresses are 34 characters. This one is '+a.length+'.'};
+  if(/^0x/i.test(a)) return {k:'bad',m:'EVM addresses need 40 hex characters after 0x. This has '+(a.length-2)+'.'};
+  return {k:'bad',m:'Not a Tron or BSC address. Tron starts with T, BSC starts with 0x.'};
+}
+
+function applyDetect(){
+  var a=document.getElementById('addr').value;
+  var d=detect(a), el=document.getElementById('detect');
+  var bep=document.getElementById('c-bep'), trc=document.getElementById('c-trc');
+  var conf=document.getElementById('evm-confirm');
+
+  bep.disabled=false; trc.disabled=false;
+  el.className='detect'; conf.className='confirm hide';
+
+  if(d.k==='none'){return;}
+
+  if(d.k==='bad'){
+    el.className='detect on bad';
+    el.innerHTML='<span class="tagchip">Check this</span>'+d.m;
+    return;
+  }
+
+  var name = d.k==='trc' ? 'Tron · TRC-20' : 'BNB Smart Chain · BEP-20';
+  el.className='detect on ok';
+  el.innerHTML='<span class="tagchip">'+name+'</span>Chain set from your address.'+
+    '<span class="verify">Confirm in your wallet: <b>'+a.slice(0,6)+'</b> … <b>'+a.slice(-6)+'</b></span>';
+
+  if(d.k==='trc'){ bep.disabled=true; } else { trc.disabled=true; conf.className='confirm'; }
+  pick(d.k);
+}
+
+function fmt(n){return n.toLocaleString('en-US');}
+function calc(){
+  var raw=(document.getElementById('amt').value||'').replace(/[^0-9]/g,'');
+  var xaf=parseInt(raw||'0',10);
+  var rate=Math.round(MARKET*(1+MARGIN));
+  var fee=fees[chain];
+  var net=Math.max(xaf-fee,0);
+  var out=net/rate;
+  document.getElementById('l-rate').innerHTML=fmt(rate)+' XAF<small>market +'+(MARGIN*100).toFixed(1)+'%</small>';
+  document.getElementById('l-fee').textContent=fmt(fee)+' XAF';
+  document.getElementById('l-out').innerHTML=out.toFixed(2)+' <span>USDT</span>';
+}
+function pick(c){
+  chain=c;
+  document.getElementById('c-bep').setAttribute('aria-pressed',c==='bep');
+  document.getElementById('c-trc').setAttribute('aria-pressed',c==='trc');
+  calc();
+}
+document.getElementById('amt').addEventListener('input',function(e){
+  var raw=e.target.value.replace(/[^0-9]/g,'');
+  e.target.value=raw?parseInt(raw,10).toLocaleString('en-US'):'';
+  calc();
+});
+document.getElementById('addr').addEventListener('input',applyDetect);
+var secs=12;
+setInterval(function(){secs+=1;if(secs>45)secs=1;
+  document.getElementById('tick').textContent='Market '+MARKET+' XAF · updated '+secs+'s ago';},1000);
+applyDetect();
+calc();
+</script>
+</body>
+</html>

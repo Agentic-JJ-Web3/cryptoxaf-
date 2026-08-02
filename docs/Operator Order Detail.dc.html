@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0E1A16; --ink-2:#233029;
+  --vault:#1A5C48; --vault-deep:#12402F;
+  --live:#3FD08F;
+  --paper:#EDEFEA; --paper-2:#F6F7F3; --card:#FFFFFF;
+  --rule:#D2D7CE; --rule-soft:#E2E6DE;
+  --fee:#8A5F10; --fee-bg:#F6EEDC;
+  --fault:#A8382C; --fault-bg:#F8E9E7;
+  --muted:#5F6D65;
+  --sans:'Instrument Sans',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --ink:#EAEEE9; --ink-2:#B9C4BC;
+    --vault:#3FD08F; --vault-deep:#2AA972;
+    --live:#3FD08F;
+    --paper:#0B1512; --paper-2:#111C18; --card:#141F1A;
+    --rule:#2A3A33; --rule-soft:#1E2C26;
+    --fee:#D9A441; --fee-bg:#241D0F;
+    --fault:#E0796B; --fault-bg:#2A1512;
+    --muted:#8A968E;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);font-family:var(--sans)}
+input,textarea{font-family:inherit}
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:var(--paper);display:flex;justify-content:center">
+<div style="width:100%;max-width:430px;padding:0 20px 40px;color:var(--ink)">
+
+  <!-- HEADER -->
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 0 16px;border-bottom:1px solid var(--rule)">
+    <div>
+      <div style="font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Order detail</div>
+      <div style="font-family:var(--mono);font-size:22px;font-weight:500">{{ orderRef }}</div>
+    </div>
+    <div style="text-align:right;font-size:12px;font-weight:600;color:{{ stageColor }}">{{ stageLabel }}</div>
+  </div>
+
+  <!-- ORDER RECORD -->
+  <div style="padding:18px 0;border-bottom:1px solid var(--rule-soft)">
+    <div style="font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Record</div>
+    <div style="display:flex;align-items:baseline;font-size:13px;padding:4px 0"><span style="color:var(--muted);white-space:nowrap">MoMo transaction ID</span><span style="flex:1;border-bottom:1px dotted var(--rule);margin:0 8px;transform:translateY(-4px)"></span><span style="font-family:var(--mono);color:var(--ink-2);white-space:nowrap">{{ momoTxId }}</span></div>
+    <div style="display:flex;align-items:baseline;font-size:13px;padding:4px 0"><span style="color:var(--muted);white-space:nowrap">Customer MoMo number</span><span style="flex:1;border-bottom:1px dotted var(--rule);margin:0 8px;transform:translateY(-4px)"></span><span style="font-family:var(--mono);color:var(--ink-2);white-space:nowrap">{{ customerMomo }}</span></div>
+    <div style="display:flex;align-items:baseline;font-size:13px;padding:4px 0"><span style="color:var(--muted);white-space:nowrap">Amount paid</span><span style="flex:1;border-bottom:1px dotted var(--rule);margin:0 8px;transform:translateY(-4px)"></span><span style="color:var(--ink-2);white-space:nowrap" class="tab">{{ xafDisplay }} XAF</span></div>
+    <div style="display:flex;align-items:baseline;font-size:13px;padding:4px 0"><span style="color:var(--muted);white-space:nowrap">Rate applied</span><span style="flex:1;border-bottom:1px dotted var(--rule);margin:0 8px;transform:translateY(-4px)"></span><span style="color:var(--ink-2);white-space:nowrap" class="tab">{{ rateDisplay }} XAF</span></div>
+    <div style="display:flex;align-items:baseline;font-size:13px;padding:4px 0"><span style="color:var(--muted);white-space:nowrap">Network fee</span><span style="flex:1;border-bottom:1px dotted var(--rule);margin:0 8px;transform:translateY(-4px)"></span><span style="color:var(--fee);white-space:nowrap" class="tab">{{ feeDisplay }} XAF</span></div>
+    <div style="display:flex;align-items:baseline;font-size:13px;padding:4px 0"><span style="color:var(--muted);white-space:nowrap">USDT owed</span><span style="flex:1;border-bottom:1px dotted var(--rule);margin:0 8px;transform:translateY(-4px)"></span><span style="color:var(--ink-2);white-space:nowrap" class="tab">{{ usdtDisplay }} USDT</span></div>
+    <div style="display:flex;align-items:baseline;font-size:13px;padding:4px 0"><span style="color:var(--muted);white-space:nowrap">Chain</span><span style="flex:1;border-bottom:1px dotted var(--rule);margin:0 8px;transform:translateY(-4px)"></span><span style="color:var(--ink-2);white-space:nowrap">{{ network }}</span></div>
+  </div>
+
+  <!-- DESTINATION -->
+  <div style="padding:18px 0;border-bottom:1px solid var(--rule-soft)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)">Destination wallet</div>
+      <button onclick="{{ copyAddr }}" style="border:1px solid var(--rule);background:var(--card);border-radius:6px;padding:6px 10px;font-size:11px;font-weight:500;color:var(--ink-2);cursor:pointer">{{ addrCopyLabel }}</button>
+    </div><div style="font-family:var(--mono);font-size:13px;line-height:1.6;word-break:break-all;color:var(--rule)">
+      <span style="color:var(--ink);font-weight:500">{{ addrHead }}</span><span>{{ addrMid }}</span><span style="color:var(--ink);font-weight:500">{{ addrTail }}</span>
+    </div>
+    
+  </div>
+
+  <!-- STAGE 1: VERIFY -->
+  <sc-if value="{{ isVerify }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:20px 0;border-bottom:1px solid var(--rule-soft)">
+      <div style="font-size:15px;font-weight:600;margin-bottom:6px">Stage 1 · verify payment</div>
+      <p style="font-size:13px;color:var(--ink-2);line-height:1.6;margin:0 0 14px">Check your own MoMo app for a payment of <b>{{ xafDisplay }} XAF</b> with transaction ID <span style="font-family:var(--mono)">{{ momoTxId }}</span> from {{ customerMomo }}.</p>
+
+      <sc-if value="{{ notRejecting }}" hint-placeholder-val="{{ true }}">
+        <label style="display:flex;gap:9px;align-items:flex-start;font-size:13px;color:var(--ink-2);margin-bottom:14px">
+          <input type="checkbox" checked="{{ verifyChecked }}" onchange="{{ onVerifyCheck }}" style="margin-top:2px;accent-color:var(--vault);flex:none">
+          <span>I have checked this against our MoMo app and it matches exactly.</span>
+        </label>
+        <div style="display:flex;gap:10px">
+          <button onclick="{{ onConfirmPayment }}" disabled="{{ confirmDisabled }}" style="flex:1;padding:14px;border:0;border-radius:6px;background:{{ confirmBg }};color:{{ confirmColor }};font-size:14px;font-weight:600;cursor:pointer">Confirm payment received</button>
+          <button onclick="{{ onOpenReject }}" style="flex:none;padding:14px 16px;border:1px solid var(--fault);border-radius:6px;background:transparent;color:var(--fault);font-size:14px;font-weight:600;cursor:pointer">Reject</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ rejecting }}" hint-placeholder-val="{{ false }}">
+        <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:6px">Reason for rejection</label>
+        <textarea value="{{ rejectReason }}" oninput="{{ onRejectReason }}" placeholder="e.g. transaction ID does not match any received payment" rows="3" style="width:100%;border:1px solid var(--rule);border-radius:6px;background:var(--card);color:var(--ink);padding:10px 12px;font-size:13px;resize:vertical;margin-bottom:12px"></textarea>
+        <div style="display:flex;gap:10px">
+          <button onclick="{{ onCancelReject }}" style="flex:1;padding:14px;border:1px solid var(--rule);border-radius:6px;background:var(--card);color:var(--ink-2);font-size:14px;font-weight:500;cursor:pointer">Cancel</button>
+          <button onclick="{{ onConfirmReject }}" disabled="{{ rejectDisabled }}" style="flex:1;padding:14px;border:0;border-radius:6px;background:{{ rejectBg }};color:{{ rejectColor }};font-size:14px;font-weight:600;cursor:pointer">Confirm rejection</button>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+
+  <!-- STAGE 2: PAYOUT -->
+  <sc-if value="{{ isPayout }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:20px 0;border-bottom:1px solid var(--rule-soft)">
+      <div style="font-size:15px;font-weight:600;margin-bottom:6px">Stage 2 · send crypto</div>
+      <p style="font-size:13px;color:var(--ink-2);line-height:1.6;margin:0 0 14px">Payment confirmed. Send <b>{{ usdtDisplay }} USDT</b> on {{ network }} to the address above, then record the transaction hash.</p>
+
+      <sc-if value="{{ notConfirmingSend }}" hint-placeholder-val="{{ true }}">
+        <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:6px">Transaction hash</label>
+        <div style="border:1px solid var(--rule);border-radius:6px;background:var(--card);padding:11px 13px;margin-bottom:14px">
+          <input type="text" value="{{ txHashInput }}" oninput="{{ onTxHashInput }}" placeholder="paste after sending" spellcheck="false" autocapitalize="off" style="border:0;background:transparent;color:var(--ink);width:100%;outline:none;font-family:var(--mono);font-size:13px">
+        </div>
+        <button onclick="{{ onOpenSendConfirm }}" disabled="{{ sendDisabled }}" style="width:100%;padding:14px;border:0;border-radius:6px;background:{{ sendBg }};color:{{ sendColor }};font-size:14px;font-weight:600;cursor:pointer">Mark as sent</button>
+      </sc-if>
+
+      <sc-if value="{{ confirmingSend }}" hint-placeholder-val="{{ false }}">
+        <div style="border:1px solid var(--fee);background:var(--fee-bg);border-radius:8px;padding:16px">
+          <div style="font-size:13px;color:var(--fee);font-weight:600;margin-bottom:6px">This cannot be undone</div>
+          <p style="font-size:13px;color:var(--ink-2);line-height:1.6;margin:0 0 14px">You are about to send <b>{{ usdtDisplay }} USDT</b> to <span style="font-family:var(--mono)">{{ addrHead }}…{{ addrTail }}</span> on {{ network }}.</p>
+          <div style="display:flex;gap:10px">
+            <button onclick="{{ onCancelSend }}" style="flex:1;padding:14px;border:1px solid var(--rule);border-radius:6px;background:var(--card);color:var(--ink-2);font-size:14px;font-weight:500;cursor:pointer">Cancel</button>
+            <button onclick="{{ onConfirmSend }}" style="flex:1;padding:14px;border:0;border-radius:6px;background:var(--vault);color:var(--paper-2);font-size:14px;font-weight:600;cursor:pointer">Confirm send</button>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+
+  <!-- COMPLETE (read-only) -->
+  <sc-if value="{{ isComplete }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:20px 0;border-bottom:1px solid var(--rule-soft)">
+      <div style="font-size:15px;font-weight:600;color:var(--live);margin-bottom:8px">Sent · record closed</div>
+      <div style="font-family:var(--mono);font-size:13px;color:var(--ink-2);word-break:break-all;background:var(--card);border:1px solid var(--rule);border-radius:8px;padding:12px 14px">{{ txHashFinal }}</div>
+    </div>
+  </sc-if>
+
+  <!-- REJECTED (read-only) -->
+  <sc-if value="{{ isRejected }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:20px 0;border-bottom:1px solid var(--rule-soft)">
+      <div style="font-size:15px;font-weight:600;color:var(--fault);margin-bottom:8px">Rejected · awaiting refund</div>
+      <p style="font-size:13px;color:var(--ink-2);line-height:1.6;margin:0">{{ finalRejectReason }}</p>
+    </div>
+  </sc-if>
+
+  <!-- LOG -->
+  <div style="padding:18px 0">
+    <div style="font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Action log</div>
+    <sc-for list="{{ log }}" as="entry" hint-placeholder-count="2">
+      <div style="display:flex;gap:12px;font-size:12px;padding:5px 0">
+        <span style="font-family:var(--mono);color:var(--muted);flex:none;width:44px">{{ entry.t }}</span>
+        <span style="color:var(--ink-2)">{{ entry.text }}</span>
+      </div>
+    </sc-for>
+  </div>
+
+</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:430,&quot;height&quot;:900},&quot;initialStage&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;Awaiting verification&quot;,&quot;options&quot;:[&quot;Awaiting verification&quot;,&quot;Verified, awaiting payout&quot;,&quot;Complete&quot;,&quot;Rejected, awaiting refund&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Order state&quot;},&quot;network&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;TRC-20&quot;,&quot;options&quot;:[&quot;TRC-20&quot;,&quot;BEP-20&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Order state&quot;}}">
+function nowLabel() {
+  var d = new Date();
+  var h = d.getHours(), m = d.getMinutes();
+  return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m;
+}
+
+class Component extends DCLogic {
+  state = {};
+
+  static stageMap = {
+    'Awaiting verification': 'verify',
+    'Verified, awaiting payout': 'payout',
+    'Complete': 'complete',
+    'Rejected, awaiting refund': 'rejected'
+  };
+
+  componentDidMount() { this._applyStage(this.props.initialStage); }
+  componentDidUpdate(prevProps) {
+    if (prevProps.initialStage !== this.props.initialStage) this._applyStage(this.props.initialStage);
+  }
+
+  _applyStage(initialStage) {
+    var stage = Component.stageMap[initialStage] || 'verify';
+    var seedLogs = {
+      verify: [{ t: '09:12', text: 'Order created' }],
+      payout: [{ t: '09:12', text: 'Order created' }, { t: '09:15', text: 'Payment confirmed by operator' }],
+      complete: [{ t: '09:12', text: 'Order created' }, { t: '09:15', text: 'Payment confirmed by operator' }, { t: '09:19', text: 'Marked sent, transaction hash recorded' }],
+      rejected: [{ t: '09:12', text: 'Order created' }, { t: '09:16', text: 'Payment rejected by operator' }]
+    };
+    this.setState({
+      stage: stage, log: seedLogs[stage], verifyChecked: false, showReject: false, rejectReason: '',
+      txHashInput: '', showSendConfirm: false, addrCopied: false,
+      finalTxHash: 'a4c2e8f1b6d9037a5c1e8b3f6a9c2d5e8f1a4b7c0e3f6a9c2e5d8f1a4b7c0e3',
+      finalRejectReason: 'Payment rejected: transaction ID does not match any payment received on our MoMo account.'
+    });
+  }
+
+  copyAddr() {
+    var self = this;
+    this.setState({ addrCopied: true });
+    setTimeout(function () { self.setState({ addrCopied: false }); }, 1500);
+  }
+  onVerifyCheck(e) { this.setState({ verifyChecked: e.target.checked }); }
+  onConfirmPayment() {
+    this.setState(s => ({ stage: 'payout', log: s.log.concat([{ t: nowLabel(), text: 'Payment confirmed by operator' }]) }));
+  }
+  onOpenReject() { this.setState({ showReject: true }); }
+  onCancelReject() { this.setState({ showReject: false, rejectReason: '' }); }
+  onRejectReason(e) { this.setState({ rejectReason: e.target.value }); }
+  onConfirmReject() {
+    var reason = this.state.rejectReason.trim();
+    this.setState(s => ({
+      stage: 'rejected',
+      finalRejectReason: 'Payment rejected: ' + reason,
+      log: s.log.concat([{ t: nowLabel(), text: 'Payment rejected by operator' }])
+    }));
+  }
+  onTxHashInput(e) { this.setState({ txHashInput: e.target.value }); }
+  onOpenSendConfirm() { this.setState({ showSendConfirm: true }); }
+  onCancelSend() { this.setState({ showSendConfirm: false }); }
+  onConfirmSend() {
+    var hash = this.state.txHashInput.trim();
+    this.setState(s => ({
+      stage: 'complete',
+      finalTxHash: hash || s.finalTxHash,
+      log: s.log.concat([{ t: nowLabel(), text: 'Marked sent, transaction hash recorded' }])
+    }));
+  }
+
+  renderVals() {
+    var network = this.props.network || 'TRC-20';
+    var presets = {
+      'TRC-20': { fee: 450, address: 'TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE' },
+      'BEP-20': { fee: 120, address: '0x9F3c2E7a1B4d8C6f0A2e5D9b3C7f1A4e8D2b6C0f' }
+    };
+    var p = presets[network];
+    var fmt = function (n) { return n.toLocaleString('en-US'); };
+    var MARKET = 620, MARGIN = 0.029, PAID = 32500;
+    var rate = Math.round(MARKET * (1 + MARGIN));
+    var usdt = (Math.max(PAID - p.fee, 0) / rate).toFixed(2);
+    var addr = p.address;
+
+    var stage = this.state.stage || 'verify';
+    var stageMeta = {
+      verify: { label: 'Awaiting verification', color: 'var(--muted)' },
+      payout: { label: 'Verified, awaiting payout', color: 'var(--fee)' },
+      complete: { label: 'Complete', color: 'var(--live)' },
+      rejected: { label: 'Rejected, awaiting refund', color: 'var(--fault)' }
+    };
+    var sm = stageMeta[stage];
+
+    return {
+      orderRef: 'CXF-7K2M',
+      stageLabel: sm.label, stageColor: sm.color,
+      momoTxId: 'MP240731.4471.882610',
+      customerMomo: '+237 677 12 34 56',
+      xafDisplay: fmt(PAID),
+      rateDisplay: fmt(rate),
+      feeDisplay: fmt(p.fee),
+      usdtDisplay: usdt,
+      network: network,
+      addrHead: addr.slice(0, 6), addrMid: addr.slice(6, -6), addrTail: addr.slice(-6),
+      copyAddr: this.copyAddr.bind(this),
+      addrCopyLabel: this.state.addrCopied ? 'Copied' : 'Copy',
+
+      isVerify: stage === 'verify', isPayout: stage === 'payout', isComplete: stage === 'complete', isRejected: stage === 'rejected',
+
+      notRejecting: !this.state.showReject, rejecting: !!this.state.showReject,
+      verifyChecked: !!this.state.verifyChecked, onVerifyCheck: this.onVerifyCheck.bind(this),
+      confirmDisabled: !this.state.verifyChecked,
+      confirmBg: this.state.verifyChecked ? 'var(--vault)' : 'var(--rule)',
+      confirmColor: this.state.verifyChecked ? 'var(--paper-2)' : 'var(--muted)',
+      onConfirmPayment: this.onConfirmPayment.bind(this),
+      onOpenReject: this.onOpenReject.bind(this),
+      rejectReason: this.state.rejectReason || '', onRejectReason: this.onRejectReason.bind(this),
+      onCancelReject: this.onCancelReject.bind(this),
+      onConfirmReject: this.onConfirmReject.bind(this),
+      rejectDisabled: !(this.state.rejectReason || '').trim(),
+      rejectBg: (this.state.rejectReason || '').trim() ? 'var(--fault)' : 'var(--rule)',
+      rejectColor: (this.state.rejectReason || '').trim() ? '#fff' : 'var(--muted)',
+
+      notConfirmingSend: !this.state.showSendConfirm, confirmingSend: !!this.state.showSendConfirm,
+      txHashInput: this.state.txHashInput || '', onTxHashInput: this.onTxHashInput.bind(this),
+      sendDisabled: !(this.state.txHashInput || '').trim(),
+      sendBg: (this.state.txHashInput || '').trim() ? 'var(--vault)' : 'var(--rule)',
+      sendColor: (this.state.txHashInput || '').trim() ? 'var(--paper-2)' : 'var(--muted)',
+      onOpenSendConfirm: this.onOpenSendConfirm.bind(this),
+      onCancelSend: this.onCancelSend.bind(this),
+      onConfirmSend: this.onConfirmSend.bind(this),
+
+      txHashFinal: this.state.finalTxHash,
+      finalRejectReason: this.state.finalRejectReason,
+      log: this.state.log || []
+    };
+  }
+}
+
+</script>
+</body>
+</html>

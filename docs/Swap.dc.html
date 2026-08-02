@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0E1A16; --ink-2:#233029;
+  --vault:#1A5C48; --vault-deep:#12402F;
+  --live:#3FD08F;
+  --paper:#EDEFEA; --paper-2:#F6F7F3; --card:#FFFFFF;
+  --rule:#D2D7CE; --rule-soft:#E2E6DE;
+  --fee:#8A5F10; --fee-bg:#F6EEDC;
+  --fault:#A8382C; --fault-bg:#F8E9E7;
+  --muted:#5F6D65;
+  --sans:'Instrument Sans',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --ink:#EAEEE9; --ink-2:#B9C4BC;
+    --vault:#3FD08F; --vault-deep:#2AA972;
+    --live:#3FD08F;
+    --paper:#0B1512; --paper-2:#111C18; --card:#141F1A;
+    --rule:#2A3A33; --rule-soft:#1E2C26;
+    --fee:#D9A441; --fee-bg:#241D0F;
+    --fault:#E0796B; --fault-bg:#2A1512;
+    --muted:#8A968E;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);font-family:var(--sans)}
+input{font-family:inherit}
+@keyframes livepulse{0%,100%{opacity:1}50%{opacity:.28}}
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:var(--paper);display:flex;justify-content:center">
+<div style="width:100%;max-width:430px;color:var(--ink);display:flex;flex-direction:column;min-height:100vh">
+
+  <div style="flex:1;padding:24px 20px 24px">
+
+    <!-- MASTHEAD -->
+    <div style="display:flex;align-items:center;gap:10px;padding-bottom:20px;border-bottom:1px solid var(--rule)">
+      <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true">
+        <rect x="2" y="2" width="28" height="28" rx="7" fill="var(--vault)"></rect>
+        <circle cx="2" cy="16" r="4.5" fill="var(--paper)"></circle>
+        <circle cx="30" cy="16" r="4.5" fill="var(--paper)"></circle>
+        <rect x="14" y="6" width="4" height="20" rx="2" fill="var(--paper-2)" transform="rotate(45 16 16)"></rect>
+        <rect x="14" y="6" width="4" height="20" rx="2" fill="var(--paper-2)" transform="rotate(-45 16 16)"></rect>
+      </svg>
+      <div style="font-size:18px;letter-spacing:-.01em">Crypto<b style="font-weight:600">XAF</b></div>
+    </div>
+
+    <!-- DIRECTION TOGGLE -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:20px">
+      <div style="text-align:center;padding:11px 0;border-radius:6px;background:var(--vault);color:var(--paper-2);font-size:14px;font-weight:600">Buy USDT</div>
+      <div style="position:relative;text-align:center;padding:11px 0;border-radius:6px;border:1px solid var(--rule);color:var(--muted);font-size:14px;font-weight:500">
+        Sell USDT
+        <span style="position:absolute;top:-8px;right:8px;white-space:nowrap;background:var(--paper-2);border:1px solid var(--rule);color:var(--muted);font-family:var(--mono);font-size:7.5px;letter-spacing:.06em;text-transform:uppercase;padding:2px 5px;border-radius:3px">Not yet available</span>
+      </div>
+    </div>
+
+    <!-- TICKER -->
+    <div style="display:flex;align-items:center;gap:7px;margin-top:20px;font-family:var(--mono);font-size:11px;color:var(--muted)">
+      <sc-if value="{{ rateOk }}" hint-placeholder-val="{{ true }}">
+        <span style="width:6px;height:6px;border-radius:50%;background:var(--live);flex:none;animation:livepulse 2.4s ease-in-out infinite"></span>
+        <span class="tab">Market {{ marketRate }} XAF &middot; updated {{ tickSec }}s ago</span>
+      </sc-if>
+      <sc-if value="{{ rateBad }}" hint-placeholder-val="{{ false }}">
+        <span style="width:6px;height:6px;border-radius:50%;background:var(--muted);flex:none"></span>
+        <span>Rate unavailable</span>
+      </sc-if>
+    </div>
+
+    <!-- AMOUNT -->
+    <div style="margin-top:18px">
+      <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:6px">You pay</label>
+      <div style="display:flex;align-items:center;gap:8px;border:1px solid var(--rule);border-radius:6px;background:var(--card);padding:12px 14px">
+        <input type="text" inputmode="numeric" value="{{ amountDisplay }}" oninput="{{ onAmount }}" aria-label="Amount in XAF" style="border:0;background:transparent;color:var(--ink);width:100%;outline:none;font-size:22px;font-weight:600;letter-spacing:-.015em" class="tab"/>
+        <span style="font-size:13px;color:var(--muted);font-weight:500;white-space:nowrap">XAF</span>
+      </div>
+    </div>
+
+    <!-- WALLET ADDRESS -->
+    <div style="margin-top:16px">
+      <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:6px">Send to wallet</label>
+      <div style="border:1px solid var(--rule);border-radius:6px;background:var(--card);padding:12px 14px">
+        <input type="text" value="{{ address }}" oninput="{{ onAddress }}" spellcheck="false" autocapitalize="off" aria-label="Wallet address" style="border:0;background:transparent;color:var(--ink);width:100%;outline:none;font-family:var(--mono);font-size:13px" />
+      </div>
+
+      <sc-if value="{{ addrBad }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:8px;font-size:12px;color:var(--fault);line-height:1.55">
+          <span style="font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:2px 6px;border-radius:3px;border:1px solid var(--fault);background:var(--fault-bg);margin-right:7px">Check this</span>{{ addrBadMsg }}
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ chainIsTrc }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:8px;font-size:12px;color:var(--muted);line-height:1.55">
+          <span style="font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--vault);border:1px solid var(--vault);background:rgba(63,208,143,.1);padding:2px 6px;border-radius:3px;margin-right:7px">Tron &middot; TRC-20</span>Chain set from your address.
+          <span style="display:block;margin-top:7px;font-family:var(--mono);font-size:12px;color:var(--ink-2)">Confirm in your wallet: <b style="background:var(--fee-bg);color:var(--fee);padding:1px 4px;border-radius:2px;font-weight:500">{{ addrHead }}</b> &hellip; <b style="background:var(--fee-bg);color:var(--fee);padding:1px 4px;border-radius:2px;font-weight:500">{{ addrTail }}</b></span>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ chainIsBep }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:8px;font-size:12px;color:var(--muted);line-height:1.55">
+          <span style="font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--vault);border:1px solid var(--vault);background:rgba(63,208,143,.1);padding:2px 6px;border-radius:3px;margin-right:7px">BNB Smart Chain &middot; BEP-20</span>Chain set from your address.
+          <span style="display:block;margin-top:7px;font-family:var(--mono);font-size:12px;color:var(--ink-2)">Confirm in your wallet: <b style="background:var(--fee-bg);color:var(--fee);padding:1px 4px;border-radius:2px;font-weight:500">{{ addrHead }}</b> &hellip; <b style="background:var(--fee-bg);color:var(--fee);padding:1px 4px;border-radius:2px;font-weight:500">{{ addrTail }}</b></span>
+        </div>
+
+        <label style="display:flex;gap:9px;align-items:flex-start;margin-top:12px;padding:11px 12px;border:1px solid var(--fee);background:var(--fee-bg);border-radius:6px;font-size:12px;color:var(--fee);line-height:1.5">
+          <input type="checkbox" checked="{{ evmConfirmed }}" onchange="{{ onEvmConfirm }}" style="margin-top:2px;accent-color:var(--fee);flex:none" />
+          <span>A <b>0x</b> address exists on every EVM chain. Confirm your wallet or exchange accepts USDT on <b>BNB Smart Chain</b>. Sent to an Ethereum-only deposit address, it arrives on-chain and is never credited.</span>
+        </label>
+      </sc-if>
+    </div>
+
+    <!-- CHAIN FEE CARDS -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px">
+      <div style="position:relative;border-radius:6px;background:var(--paper-2);padding:11px 12px;{{ bepCardBorder }}">
+        <span style="position:absolute;top:-7px;right:9px;background:var(--fee-bg);color:var(--fee);font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:2px 6px;border-radius:3px;border:1px solid var(--fee)">Cheapest</span>
+        <span style="font-size:13px;font-weight:600;color:var(--ink);display:block">BEP-20</span>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--fee);margin-top:3px;display:block">Network fee 120 XAF</span>
+      </div>
+      <div style="border-radius:6px;background:var(--paper-2);padding:11px 12px;{{ trcCardBorder }}">
+        <span style="font-size:13px;font-weight:600;color:var(--ink);display:block">TRC-20</span>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--fee);margin-top:3px;display:block">Network fee 450 XAF</span>
+      </div>
+    </div>
+
+    <!-- LEDGER -->
+    <div style="margin-top:20px;background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:22px 20px 18px">
+
+      <div style="display:flex;align-items:baseline;font-size:13px;padding:5px 0">
+        <span style="color:var(--muted);white-space:nowrap">Rate</span>
+        <span style="flex:1;border-bottom:1px dotted var(--rule);margin:0 8px;transform:translateY(-4px);min-width:14px"></span>
+        <span style="color:var(--ink-2);white-space:nowrap" class="tab">{{ rateValueDisplay }}</span>
+      </div>
+      <div style="display:flex;align-items:baseline;font-size:13px;padding:5px 0">
+        <span style="color:var(--muted);white-space:nowrap">Network fee</span>
+        <span style="flex:1;border-bottom:1px dotted var(--rule);margin:0 8px;transform:translateY(-4px);min-width:14px"></span>
+        <span style="color:var(--fee);white-space:nowrap" class="tab">{{ feeValueDisplay }}</span>
+      </div>
+      <div style="display:flex;align-items:baseline;font-size:13px;padding:5px 0">
+        <span style="color:var(--muted);white-space:nowrap">Rate held</span>
+        <span style="flex:1;border-bottom:1px dotted var(--rule);margin:0 8px;transform:translateY(-4px);min-width:14px"></span>
+        <span style="color:var(--ink-2);white-space:nowrap">15 minutes</span>
+      </div>
+
+      <sc-if value="{{ feeIsProvisional }}" hint-placeholder-val="{{ true }}">
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">Assumes the cheapest network. Enter your address to confirm.</div>
+      </sc-if>
+
+      <div style="position:relative;height:18px;margin:14px -20px 8px">
+        <div style="position:absolute;top:9px;left:20px;right:20px;height:1px;background:repeating-linear-gradient(to right,var(--rule) 0 5px,transparent 5px 11px)"></div>
+        <div style="position:absolute;top:2px;left:-8px;width:15px;height:15px;border-radius:50%;background:var(--paper);border:1px solid var(--rule)"></div>
+        <div style="position:absolute;top:2px;right:-8px;width:15px;height:15px;border-radius:50%;background:var(--paper);border:1px solid var(--rule)"></div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <span style="font-size:13px;font-weight:500;color:var(--ink)">You receive</span>
+        <span style="font-size:30px;font-weight:600;letter-spacing:-.025em;color:var(--ink)" class="tab">{{ receivedDisplay }} <span style="font-size:15px;font-weight:400;color:var(--muted)">USDT</span></span>
+      </div>
+    </div>
+
+    <sc-if value="{{ rateBad }}" hint-placeholder-val="{{ false }}">
+      <div style="margin-top:14px;font-size:12px;color:var(--fault);line-height:1.5">Rate feed is down. We are not quoting until it returns.</div>
+    </sc-if>
+
+  </div>
+
+  <!-- STICKY BOTTOM -->
+  <div style="position:sticky;bottom:0;background:var(--paper);border-top:1px solid var(--rule);padding:14px 20px 20px">
+    <button onclick="{{ onSubmit }}" disabled="{{ ctaDisabled }}" style="width:100%;padding:15px;border:0;border-radius:6px;background:{{ ctaBg }};color:{{ ctaColor }};font-family:var(--sans);font-size:15px;font-weight:600;letter-spacing:.01em">{{ ctaLabel }}</button>
+    <div style="text-align:center;font-size:12px;color:var(--muted);margin-top:11px">Settles in 5&ndash;15 minutes &middot; Mon&ndash;Sat, 7am&ndash;9pm</div>
+  </div>
+
+</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:430,&quot;height&quot;:900},&quot;rateAvailable&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Simulate&quot;},&quot;addressPreset&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;Tron address (TRC-20)&quot;,&quot;options&quot;:[&quot;Empty&quot;,&quot;Tron address (TRC-20)&quot;,&quot;0x address (needs confirmation)&quot;,&quot;Malformed address&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Simulate&quot;}}">
+class Component extends DCLogic {
+  state = { amountRaw: 32500, address: '', evmConfirmed: false, tickSec: 0 };
+
+  componentDidMount() {
+    this._applyPreset();
+    this._timer = setInterval(() => {
+      this.setState(s => ({ tickSec: s.tickSec >= 25 ? 0 : s.tickSec + 1 }));
+    }, 1000);
+  }
+  componentDidUpdate(prevProps) {
+    if (prevProps.addressPreset !== this.props.addressPreset) this._applyPreset();
+  }
+  componentWillUnmount() { clearInterval(this._timer); }
+
+  _applyPreset() {
+    var map = {
+      'Empty': '',
+      'Tron address (TRC-20)': 'TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE',
+      '0x address (needs confirmation)': '0x9F3c2E7a1B4d8C6f0A2e5D9b3C7f1A4e8D2b6C0f',
+      'Malformed address': 'TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLS'
+    };
+    var v = map[this.props.addressPreset];
+    this.setState({ address: v != null ? v : '', evmConfirmed: false });
+  }
+
+  onAmount(e) {
+    var raw = e.target.value.replace(/[^0-9]/g, '');
+    this.setState({ amountRaw: raw ? parseInt(raw, 10) : 0 });
+  }
+  onAddress(e) { this.setState({ address: e.target.value, evmConfirmed: false }); }
+  onEvmConfirm(e) { this.setState({ evmConfirmed: e.target.checked }); }
+  onSubmit() {}
+
+  _detect(a) {
+    a = (a || '').trim();
+    if (!a) return { k: 'none' };
+    if (/^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(a)) return { k: 'trc' };
+    if (/^0x[a-fA-F0-9]{40}$/.test(a)) return { k: 'bep' };
+    if (/^T/.test(a)) return { k: 'bad', m: 'Tron addresses are 34 characters. This one is ' + a.length + '.' };
+    if (/^0x/i.test(a)) return { k: 'bad', m: 'BSC and other EVM addresses need 40 hex characters after 0x. This one has ' + (a.length - 2) + '.' };
+    return { k: 'bad', m: 'Not a Tron or BSC address. Tron starts with T, BSC starts with 0x.' };
+  }
+
+  renderVals() {
+    var fmt = function (n) { return n.toLocaleString('en-US'); };
+    var rateOk = this.props.rateAvailable !== false;
+    var MARKET = 620, MARGIN = 0.029;
+    var rate = Math.round(MARKET * (1 + MARGIN));
+    var fees = { trc: 450, bep: 120 };
+
+    var d = this._detect(this.state.address);
+    var chainIsTrc = d.k === 'trc', chainIsBep = d.k === 'bep', addrBad = d.k === 'bad';
+    var feeIsProvisional = !chainIsTrc && !chainIsBep;
+    var fee = chainIsTrc ? fees.trc : (chainIsBep ? fees.bep : fees.bep);
+
+    var xaf = this.state.amountRaw || 0;
+    var net = Math.max(xaf - fee, 0);
+    var out = rateOk ? (net / rate).toFixed(2) : '—';
+
+    var needsEvmConfirm = chainIsBep;
+    var ctaDisabled = !rateOk || (d.k !== 'trc' && d.k !== 'bep') || (needsEvmConfirm && !this.state.evmConfirmed);
+    var ctaLabel = !rateOk ? 'Rate unavailable'
+      : (d.k !== 'trc' && d.k !== 'bep') ? 'Enter a valid wallet address'
+      : (needsEvmConfirm && !this.state.evmConfirmed) ? 'Confirm the network above'
+      : 'Continue to payment';
+
+    var addr = this.state.address;
+
+    return {
+      rateOk: rateOk, rateBad: !rateOk,
+      marketRate: fmt(MARKET), tickSec: this.state.tickSec,
+      amountDisplay: xaf ? fmt(xaf) : '', onAmount: this.onAmount.bind(this),
+      address: addr, onAddress: this.onAddress.bind(this),
+      addrBad: addrBad, addrBadMsg: d.m,
+      chainIsTrc: chainIsTrc, chainIsBep: chainIsBep,
+      addrHead: addr.slice(0, 6), addrTail: addr.slice(-6),
+      evmConfirmed: this.state.evmConfirmed, onEvmConfirm: this.onEvmConfirm.bind(this),
+      bepCardBorder: chainIsBep ? 'box-shadow:inset 0 0 0 1px var(--vault);border:1px solid var(--vault)' : (chainIsTrc ? 'opacity:.4;border:1px solid var(--rule)' : 'border:1px solid var(--rule)'),
+      trcCardBorder: chainIsTrc ? 'box-shadow:inset 0 0 0 1px var(--vault);border:1px solid var(--vault)' : (chainIsBep ? 'opacity:.4;border:1px solid var(--rule)' : 'border:1px solid var(--rule)'),
+      rateValueDisplay: rateOk ? (fmt(rate) + ' XAF · market +2.9%') : '—',
+      feeValueDisplay: rateOk ? (fmt(fee) + ' XAF') : '—',
+      feeIsProvisional: feeIsProvisional,
+      receivedDisplay: out,
+      onSubmit: this.onSubmit.bind(this),
+      ctaDisabled: ctaDisabled,
+      ctaLabel: ctaLabel,
+      ctaBg: ctaDisabled ? 'var(--rule)' : 'var(--vault)',
+      ctaColor: ctaDisabled ? 'var(--muted)' : 'var(--paper-2)'
+    };
+  }
+}
+
+</script>
+</body>
+</html>

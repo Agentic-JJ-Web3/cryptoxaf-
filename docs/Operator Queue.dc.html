@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0E1A16; --ink-2:#233029;
+  --vault:#1A5C48; --vault-deep:#12402F;
+  --live:#3FD08F;
+  --paper:#EDEFEA; --paper-2:#F6F7F3; --card:#FFFFFF;
+  --rule:#D2D7CE; --rule-soft:#E2E6DE;
+  --fee:#8A5F10; --fee-bg:#F6EEDC;
+  --fault:#A8382C; --fault-bg:#F8E9E7;
+  --muted:#5F6D65;
+  --sans:'Instrument Sans',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --ink:#EAEEE9; --ink-2:#B9C4BC;
+    --vault:#3FD08F; --vault-deep:#2AA972;
+    --live:#3FD08F;
+    --paper:#0B1512; --paper-2:#111C18; --card:#141F1A;
+    --rule:#2A3A33; --rule-soft:#1E2C26;
+    --fee:#D9A441; --fee-bg:#241D0F;
+    --fault:#E0796B; --fault-bg:#2A1512;
+    --muted:#8A968E;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);font-family:var(--sans)}
+button{font-family:inherit}
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:var(--paper);display:flex;justify-content:center">
+<div style="width:100%;max-width:430px;color:var(--ink)">
+
+  <!-- HEADER -->
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:20px 20px 16px;border-bottom:1px solid var(--rule)">
+    <div style="display:flex;align-items:center;gap:9px">
+      <svg width="24" height="24" viewBox="0 0 32 32" aria-hidden="true">
+        <rect x="2" y="2" width="28" height="28" rx="7" fill="var(--vault)"></rect>
+        <circle cx="2" cy="16" r="4.5" fill="var(--paper)"></circle>
+        <circle cx="30" cy="16" r="4.5" fill="var(--paper)"></circle>
+        <rect x="14" y="6" width="4" height="20" rx="2" fill="var(--paper-2)" transform="rotate(45 16 16)"></rect>
+        <rect x="14" y="6" width="4" height="20" rx="2" fill="var(--paper-2)" transform="rotate(-45 16 16)"></rect>
+      </svg>
+      <div style="font-size:15px;color:var(--ink-2)">Operator queue</div>
+    </div>
+    <button onclick="{{ toggleOpen }}" style="display:flex;align-items:center;gap:7px;border:1px solid var(--rule);background:var(--card);border-radius:20px;padding:6px 6px 6px 12px;cursor:pointer">
+      <span style="font-size:11px;color:var(--muted)">{{ openLabel }}</span>
+      <span style="width:30px;height:18px;border-radius:10px;background:{{ switchBg }};position:relative;flex:none">
+        <span style="position:absolute;top:2px;left:{{ knobLeft }};width:14px;height:14px;border-radius:50%;background:var(--paper-2)"></span>
+      </span>
+    </button>
+  </div>
+
+  <sc-if value="{{ isClosed }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:10px 20px;background:var(--paper-2);border-bottom:1px solid var(--rule-soft);font-size:12px;color:var(--muted)">Platform closed &middot; new orders are paused. Existing orders continue.</div>
+  </sc-if>
+
+  <!-- ACTION COUNT -->
+  <div style="padding:20px 20px 6px">
+    <div style="font-size:32px;font-weight:600;letter-spacing:-.02em" class="tab">{{ actionCount }} <span style="font-size:16px;font-weight:400;color:var(--muted)">need action</span></div>
+    <div style="font-size:12px;color:var(--muted);margin-top:4px">{{ totalCount }} in queue &middot; oldest first</div>
+  </div>
+
+  <!-- TODAY -->
+  <div style="padding:16px 20px 18px;border-bottom:1px solid var(--rule)">
+    <div style="font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Today</div>
+    <div style="display:flex;align-items:baseline;font-size:13px;padding:3px 0">
+      <span style="color:var(--muted);white-space:nowrap">Orders settled</span>
+      <span style="flex:1;border-bottom:1px dotted var(--rule);margin:0 8px;transform:translateY(-4px);min-width:14px"></span>
+      <span style="color:var(--ink-2);white-space:nowrap" class="tab">34</span>
+    </div>
+    <div style="display:flex;align-items:baseline;font-size:13px;padding:3px 0">
+      <span style="color:var(--muted);white-space:nowrap">XAF collected</span>
+      <span style="flex:1;border-bottom:1px dotted var(--rule);margin:0 8px;transform:translateY(-4px);min-width:14px"></span>
+      <span style="color:var(--ink-2);white-space:nowrap" class="tab">1,842,500</span>
+    </div>
+    <div style="display:flex;align-items:baseline;font-size:13px;padding:3px 0">
+      <span style="color:var(--muted);white-space:nowrap">USDT sent</span>
+      <span style="flex:1;border-bottom:1px dotted var(--rule);margin:0 8px;transform:translateY(-4px);min-width:14px"></span>
+      <span style="color:var(--ink-2);white-space:nowrap" class="tab">2,841.60</span>
+    </div>
+  </div>
+
+  <!-- QUEUE -->
+  <div style="display:flex;flex-direction:column">
+    <sc-for list="{{ rows }}" as="row" hint-placeholder-count="8">
+      <button style="{{ row.rowPad }}display:flex;align-items:center;gap:14px;width:100%;border:0;border-bottom:1px solid var(--rule-soft);background:transparent;text-align:left;cursor:pointer">
+        <div style="flex:none;width:64px">
+          <div style="font-family:var(--mono);font-size:22px;font-weight:600;color:{{ row.elapsedColor }}" class="tab">{{ row.elapsedLabel }}</div>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-family:var(--mono);font-size:14px;font-weight:500;color:var(--ink)">{{ row.ref }}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px" class="tab">{{ row.amountLabel }} XAF &middot; {{ row.chain }}</div>
+          <div style="font-size:12px;font-weight:{{ row.stateWeight }};color:{{ row.stateColor }};margin-top:3px">{{ row.stateLabel }}</div>
+        </div>
+        <div style="flex:none;font-size:16px;color:var(--rule)">&rsaquo;</div>
+      </button>
+    </sc-for>
+  </div>
+
+</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:430,&quot;height&quot;:900},&quot;platformOpenDefault&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Simulate&quot;},&quot;denseRows&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Simulate&quot;}}">
+class Component extends DCLogic {
+  state = {};
+
+  componentDidMount() {
+    if (this.state.isOpen === undefined) {
+      this.setState({ isOpen: this.props.platformOpenDefault !== false });
+    }
+  }
+
+  toggleOpen() { this.setState(s => ({ isOpen: !s.isOpen })); }
+
+  renderVals() {
+    var isOpen = this.state.isOpen !== undefined ? this.state.isOpen : (this.props.platformOpenDefault !== false);
+    var dense = this.props.denseRows === true;
+    var fmt = function (n) { return n.toLocaleString('en-US'); };
+
+    var data = [
+      { ref: 'CXF-7K2M', elapsed: 27, amount: 32500, chain: 'TRC-20', state: 'send' },
+      { ref: 'CXF-9P3Q', elapsed: 22, amount: 15000, chain: 'BEP-20', state: 'send' },
+      { ref: 'CXF-4L8R', elapsed: 14, amount: 50000, chain: 'TRC-20', state: 'send' },
+      { ref: 'CXF-2W6T', elapsed: 11, amount: 8000, chain: 'BEP-20', state: 'refund' },
+      { ref: 'CXF-7B1X', elapsed: 8, amount: 21000, chain: 'TRC-20', state: 'checking' },
+      { ref: 'CXF-5N4V', elapsed: 5, amount: 40000, chain: 'BEP-20', state: 'waiting' },
+      { ref: 'CXF-1K9M', elapsed: 2, amount: 12000, chain: 'TRC-20', state: 'waiting' },
+      { ref: 'CXF-8Q2Z', elapsed: 1, amount: 60000, chain: 'BEP-20', state: 'checking' }
+    ];
+
+    var stateMeta = {
+      send: { label: 'Send USDT', color: 'var(--ink)', weight: 600, actionable: true },
+      refund: { label: 'Refund', color: 'var(--fault)', weight: 600, actionable: true },
+      checking: { label: 'Checking payment', color: 'var(--muted)', weight: 400, actionable: false },
+      waiting: { label: 'Awaiting payment', color: 'var(--muted)', weight: 400, actionable: false }
+    };
+
+    var rows = data.map(function (d) {
+      var color = d.elapsed > 20 ? 'var(--fault)' : (d.elapsed > 10 ? 'var(--fee)' : 'var(--ink)');
+      var h = Math.floor(d.elapsed / 60), m = d.elapsed % 60;
+      var elapsedLabel = h > 0 ? (h + 'h ' + (m < 10 ? '0' : '') + m + 'm') : (d.elapsed + 'm');
+      var meta = stateMeta[d.state];
+      return {
+        ref: d.ref,
+        elapsedLabel: elapsedLabel,
+        elapsedColor: color,
+        amountLabel: fmt(d.amount),
+        chain: d.chain,
+        stateLabel: meta.label,
+        stateColor: meta.color,
+        stateWeight: meta.weight,
+        rowPad: dense ? 'padding:12px 20px;' : 'padding:18px 20px;'
+      };
+    });
+
+    var actionCount = data.filter(function (d) { return stateMeta[d.state].actionable; }).length;
+
+    return {
+      openLabel: isOpen ? 'Open' : 'Closed',
+      isClosed: !isOpen,
+      switchBg: isOpen ? 'var(--vault)' : 'var(--rule)',
+      knobLeft: isOpen ? '14px' : '2px',
+      toggleOpen: this.toggleOpen.bind(this),
+      actionCount: actionCount,
+      totalCount: data.length,
+      rows: rows
+    };
+  }
+}
+
+</script>
+</body>
+</html>

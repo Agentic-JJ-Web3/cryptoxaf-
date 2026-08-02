@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<template id="__bundler_thumbnail" data-bg-color="#0E1A16">
+  <svg viewBox="0 0 120 56" xmlns="http://www.w3.org/2000/svg">
+    <rect x="8" y="8" width="40" height="40" rx="9" fill="#1A5C48"></rect>
+    <circle cx="8" cy="28" r="6" fill="#0E1A16"></circle>
+    <circle cx="48" cy="28" r="6" fill="#0E1A16"></circle>
+    <rect x="24" y="12" width="6" height="30" rx="3" fill="#EDEFEA" transform="rotate(45 28 28)"></rect>
+    <rect x="24" y="12" width="6" height="30" rx="3" fill="#EDEFEA" transform="rotate(-45 28 28)"></rect>
+  </svg>
+</template>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0E1A16; --ink-2:#233029;
+  --vault:#1A5C48; --vault-deep:#12402F;
+  --live:#3FD08F;
+  --paper:#EDEFEA; --paper-2:#F6F7F3; --card:#FFFFFF;
+  --rule:#D2D7CE; --rule-soft:#E2E6DE;
+  --fee:#8A5F10; --fee-bg:#F6EEDC;
+  --fault:#A8382C; --fault-bg:#F8E9E7;
+  --muted:#5F6D65;
+  --sans:'Instrument Sans',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --ink:#EAEEE9; --ink-2:#B9C4BC;
+    --vault:#3FD08F; --vault-deep:#2AA972;
+    --live:#3FD08F;
+    --paper:#0B1512; --paper-2:#111C18; --card:#141F1A;
+    --rule:#2A3A33; --rule-soft:#1E2C26;
+    --fee:#D9A441; --fee-bg:#241D0F;
+    --fault:#E0796B; --fault-bg:#2A1512;
+    --muted:#8A968E;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);font-family:var(--sans)}
+input{font-family:inherit}
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:var(--paper);display:flex;justify-content:center">
+<div style="width:100%;max-width:430px;padding:0 20px 24px;color:var(--ink);display:flex;flex-direction:column;min-height:100vh">
+
+  <div style="flex:1">
+  <!-- HEADER -->
+  <div style="padding:24px 0 16px;border-bottom:1px solid var(--rule)">
+    <div style="font-size:19px;font-weight:600">Operator settings</div>
+    <p style="font-size:12px;color:var(--muted);margin:6px 0 0">Changes preview instantly below. Nothing reaches customers until you save.</p>
+  </div>
+
+  <!-- MARGIN -->
+  <div style="padding:18px 0;border-bottom:1px solid var(--rule-soft)">
+    <div style="font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Margin</div>
+    <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:6px">Margin over market rate</label>
+    <div style="display:flex;align-items:center;gap:8px;border:1px solid var(--rule);border-radius:6px;background:var(--card);padding:11px 13px;margin-bottom:14px">
+      <input type="number" step="0.1" value="{{ margin }}" oninput="{{ onMargin }}" style="border:0;background:transparent;color:var(--ink);width:100%;outline:none;font-size:18px;font-weight:600" class="tab" />
+      <span style="font-size:13px;color:var(--muted)">%</span>
+    </div>
+
+    <div style="background:var(--paper-2);border:1px solid var(--rule);border-radius:8px;padding:14px 16px">
+      <div style="font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Preview at current market rate</div>
+      <div style="display:flex;align-items:baseline;font-size:13px;padding:3px 0"><span style="color:var(--muted)">Market rate</span><span style="flex:1;border-bottom:1px dotted var(--rule);margin:0 8px;transform:translateY(-4px)"></span><span style="color:var(--ink-2)" class="tab">{{ marketRate }} XAF</span></div>
+      <div style="display:flex;align-items:baseline;font-size:13px;padding:3px 0"><span style="color:var(--muted)">Quoted before rail</span><span style="flex:1;border-bottom:1px dotted var(--rule);margin:0 8px;transform:translateY(-4px)"></span><span style="color:var(--ink-2)" class="tab">{{ rawQuote }} XAF</span></div>
+      <div style="display:flex;align-items:baseline;font-size:13px;padding:3px 0"><span style="color:var(--ink);font-weight:600">Quoted to customers</span><span style="flex:1;border-bottom:1px dotted var(--rule);margin:0 8px;transform:translateY(-4px)"></span><span style="color:var(--ink);font-weight:600" class="tab">{{ clampedQuote }} XAF</span></div>
+      <sc-if value="{{ isClamped }}" hint-placeholder-val="{{ false }}">
+        <div style="font-size:11px;color:var(--fee);margin-top:6px">Clamped by the safety rail below.</div>
+      </sc-if>
+    </div>
+  </div>
+
+  <!-- SAFETY RAIL -->
+  <div style="padding:18px 0;border-bottom:1px solid var(--rule-soft)">
+    <div style="font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Rate safety rail</div>
+    <p style="font-size:12px;color:var(--ink-2);line-height:1.6;margin:0 0 12px">A hard floor and ceiling on the quoted rate, so a bad market feed or a bug can never quote an absurd rate. This is a safety rail, not a target &mdash; margin above sets the actual quote.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div>
+        <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:6px">Floor</label>
+        <div style="border:1px solid var(--rule);border-radius:6px;background:var(--card);padding:11px 13px">
+          <input type="number" value="{{ floor }}" oninput="{{ onFloor }}" style="border:0;background:transparent;color:var(--ink);width:100%;outline:none;font-size:15px;font-weight:600" class="tab" />
+        </div>
+      </div>
+      <div>
+        <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:6px">Ceiling</label>
+        <div style="border:1px solid var(--rule);border-radius:6px;background:var(--card);padding:11px 13px">
+          <input type="number" value="{{ ceiling }}" oninput="{{ onCeiling }}" style="border:0;background:transparent;color:var(--ink);width:100%;outline:none;font-size:15px;font-weight:600" class="tab" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ORDER SIZE -->
+  <div style="padding:18px 0;border-bottom:1px solid var(--rule-soft)">
+    <div style="font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Order size, XAF</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div>
+        <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:6px">Minimum</label>
+        <div style="border:1px solid var(--rule);border-radius:6px;background:var(--card);padding:11px 13px">
+          <input type="number" value="{{ minOrder }}" oninput="{{ onMinOrder }}" style="border:0;background:transparent;color:var(--ink);width:100%;outline:none;font-size:15px;font-weight:600" class="tab" />
+        </div>
+      </div>
+      <div>
+        <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:6px">Maximum</label>
+        <div style="border:1px solid var(--rule);border-radius:6px;background:var(--card);padding:11px 13px">
+          <input type="number" value="{{ maxOrder }}" oninput="{{ onMaxOrder }}" style="border:0;background:transparent;color:var(--ink);width:100%;outline:none;font-size:15px;font-weight:600" class="tab" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOURS -->
+  <div style="padding:18px 0;border-bottom:1px solid var(--rule-soft)">
+    <div style="font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Operating hours</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      <div>
+        <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:6px">Opens</label>
+        <div style="border:1px solid var(--rule);border-radius:6px;background:var(--card);padding:11px 13px">
+          <input type="time" value="{{ openTime }}" oninput="{{ onOpenTime }}" style="border:0;background:transparent;color:var(--ink);width:100%;outline:none;font-size:15px" />
+        </div>
+      </div>
+      <div>
+        <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:6px">Closes</label>
+        <div style="border:1px solid var(--rule);border-radius:6px;background:var(--card);padding:11px 13px">
+          <input type="time" value="{{ closeTime }}" oninput="{{ onCloseTime }}" style="border:0;background:transparent;color:var(--ink);width:100%;outline:none;font-size:15px" />
+        </div>
+      </div>
+    </div>
+    <button onclick="{{ onToggleOverride }}" style="display:flex;align-items:center;justify-content:space-between;width:100%;border:1px solid var(--rule);background:var(--card);border-radius:8px;padding:12px 14px;cursor:pointer">
+      <span>
+        <span style="display:block;font-size:13px;font-weight:500;color:var(--ink)">Force closed now</span>
+        <span style="display:block;font-size:11px;color:var(--muted);margin-top:2px">Overrides the schedule above until turned off</span>
+      </span>
+      <span style="width:30px;height:18px;border-radius:10px;background:{{ overrideSwitchBg }};position:relative;flex:none">
+        <span style="position:absolute;top:2px;left:{{ overrideKnobLeft }};width:14px;height:14px;border-radius:50%;background:var(--paper-2)"></span>
+      </span>
+    </button>
+  </div>
+
+  <!-- MOMO NUMBER -->
+  <div style="padding:18px 0;border-bottom:1px solid var(--rule-soft)">
+    <div style="font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">MoMo number shown to customers</div>
+    <div style="border:1px solid var(--rule);border-radius:6px;background:var(--card);padding:11px 13px">
+      <input type="text" value="{{ momoNumber }}" oninput="{{ onMomoNumber }}" style="border:0;background:transparent;color:var(--ink);width:100%;outline:none;font-family:var(--mono);font-size:14px" />
+    </div>
+  </div>
+
+  <!-- FLOAT BALANCES -->
+  <div style="padding:18px 0">
+    <div style="font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Live float balances</div>
+    <div style="display:flex;flex-direction:column">
+      <sc-for list="{{ floats }}" as="f" hint-placeholder-count="4">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--rule-soft)">
+          <span style="font-size:13px;color:var(--ink-2)">{{ f.label }}</span>
+          <span style="display:flex;align-items:center;gap:8px">
+            <sc-if value="{{ f.low }}" hint-placeholder-val="{{ false }}">
+              <span style="font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--fee);background:var(--fee-bg);border:1px solid var(--fee);padding:2px 6px;border-radius:3px;white-space:nowrap">Low &mdash; blocks payout</span>
+            </sc-if>
+            <span style="font-family:var(--mono);font-size:13px;color:{{ f.color }}" class="tab">{{ f.value }}</span>
+          </span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  </div>
+
+  <!-- SAVE BAR -->
+  <sc-if value="{{ isDirty }}" hint-placeholder-val="{{ false }}">
+    <div style="position:sticky;bottom:0;background:var(--paper);border-top:1px solid var(--rule);padding:14px 0 4px;display:flex;gap:10px">
+      <button onclick="{{ onDiscard }}" style="flex:1;padding:14px;border:1px solid var(--rule);border-radius:6px;background:var(--card);color:var(--ink-2);font-size:14px;font-weight:500;cursor:pointer">Discard</button>
+      <button onclick="{{ onSave }}" style="flex:2;padding:14px;border:0;border-radius:6px;background:var(--vault);color:var(--paper-2);font-size:14px;font-weight:600;cursor:pointer">Save changes</button>
+    </div>
+  </sc-if>
+  <sc-if value="{{ justSaved }}" hint-placeholder-val="{{ false }}">
+    <div style="text-align:center;font-size:12px;color:var(--muted);padding:12px 0 4px">Saved &mdash; live for customers now.</div>
+  </sc-if>
+
+</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:430,&quot;height&quot;:1400},&quot;simulateLowFloat&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Simulate&quot;},&quot;forceClosedDefault&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Simulate&quot;}}">
+function defaultSettings(props) {
+  return {
+    margin: 2.9, floor: 600, ceiling: 700,
+    minOrder: 2000, maxOrder: 500000,
+    openTime: '07:00', closeTime: '21:00',
+    override: false, momoNumber: '67 12 345 67'
+  };
+}
+
+class Component extends DCLogic {
+  state = { live: defaultSettings(), draft: defaultSettings(), justSaved: false };
+
+  componentDidMount() {
+    if (this.props.forceClosedDefault) {
+      var s = defaultSettings();
+      s.override = true;
+      this.setState({ live: s, draft: Object.assign({}, s) });
+    }
+  }
+
+  _update(field, val) {
+    this.setState(s => ({ draft: Object.assign({}, s.draft, { [field]: val }), justSaved: false }));
+  }
+  onMargin(e) { this._update('margin', parseFloat(e.target.value) || 0); }
+  onFloor(e) { this._update('floor', parseFloat(e.target.value) || 0); }
+  onCeiling(e) { this._update('ceiling', parseFloat(e.target.value) || 0); }
+  onMinOrder(e) { this._update('minOrder', parseFloat(e.target.value) || 0); }
+  onMaxOrder(e) { this._update('maxOrder', parseFloat(e.target.value) || 0); }
+  onOpenTime(e) { this._update('openTime', e.target.value); }
+  onCloseTime(e) { this._update('closeTime', e.target.value); }
+  onMomoNumber(e) { this._update('momoNumber', e.target.value); }
+  onToggleOverride() { this.setState(s => ({ draft: Object.assign({}, s.draft, { override: !s.draft.override }), justSaved: false })); }
+  onSave() { this.setState(s => ({ live: Object.assign({}, s.draft), justSaved: true })); }
+  onDiscard() { this.setState(s => ({ draft: Object.assign({}, s.live), justSaved: false })); }
+
+  renderVals() {
+    var d = this.state.draft;
+    var fmt = function (n) { return n.toLocaleString('en-US'); };
+    var MARKET = 620;
+    var raw = Math.round(MARKET * (1 + d.margin / 100));
+    var clamped = Math.min(Math.max(raw, d.floor), d.ceiling);
+    var isDirty = JSON.stringify(this.state.draft) !== JSON.stringify(this.state.live);
+
+    var lowSim = this.props.simulateLowFloat !== false;
+    var floats = [
+      { label: 'USDT · TRC-20', value: fmt(2140.5), low: false },
+      { label: 'USDT · BEP-20', value: fmt(3960.2), low: false },
+      { label: 'TRX (energy)', value: lowSim ? fmt(85) : fmt(4200), low: lowSim },
+      { label: 'BNB (gas)', value: fmt(1.42), low: false }
+    ].map(function (f) { return Object.assign({}, f, { color: f.low ? 'var(--fee)' : 'var(--ink-2)' }); });
+
+    return {
+      margin: d.margin, onMargin: this.onMargin.bind(this),
+      floor: d.floor, onFloor: this.onFloor.bind(this),
+      ceiling: d.ceiling, onCeiling: this.onCeiling.bind(this),
+      minOrder: d.minOrder, onMinOrder: this.onMinOrder.bind(this),
+      maxOrder: d.maxOrder, onMaxOrder: this.onMaxOrder.bind(this),
+      openTime: d.openTime, onOpenTime: this.onOpenTime.bind(this),
+      closeTime: d.closeTime, onCloseTime: this.onCloseTime.bind(this),
+      momoNumber: d.momoNumber, onMomoNumber: this.onMomoNumber.bind(this),
+      onToggleOverride: this.onToggleOverride.bind(this),
+      overrideSwitchBg: d.override ? 'var(--fault)' : 'var(--rule)',
+      overrideKnobLeft: d.override ? '14px' : '2px',
+      marketRate: fmt(MARKET), rawQuote: fmt(raw), clampedQuote: fmt(clamped),
+      isClamped: clamped !== raw,
+      floats: floats,
+      isDirty: isDirty, justSaved: this.state.justSaved && !isDirty,
+      onSave: this.onSave.bind(this), onDiscard: this.onDiscard.bind(this)
+    };
+  }
+}
+
+</script>
+</body>
+</html>

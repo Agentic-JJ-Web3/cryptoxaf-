@@ -67,7 +67,7 @@ model Order {
   // What the customer types and what leaves their MoMo. No minor unit in XAF.
   xafAmount          Int
   // Base units for `chain`'s USDT contract (6dp Tron, 18dp BSC) — see src/config/chains.js.
-  usdtAmount         BigInt
+  usdtAmount         BigInt       @db.Decimal(38, 0)
 
   rateSnapshotId     String       @unique
   rateSnapshot       RateSnapshot @relation(fields: [rateSnapshotId], references: [id])
