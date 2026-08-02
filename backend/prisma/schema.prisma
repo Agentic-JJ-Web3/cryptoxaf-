@@ -113,3 +113,37 @@ model OrderAuditLog {
   @@index([orderId])
   @@index([createdAt])
 }
+
+// An admin user. Provisioned out-of-band (seed script / direct DB access
+// for now, an admin-settings screen later) — there is no signup route,
+// mirroring the customer side's "no accounts" ethos for a different reason:
+// operators are trusted staff, not self-service signups.
+model Operator {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  displayName  String
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  @@index([email])
+}
+
+// Append-only security/audit trail for admin actions that aren't order
+// state transitions (those live in OrderAuditLog instead, keyed off
+// fromStatus/toStatus). Currently just login attempts; the natural home
+// for admin-settings changes once that screen exists. UPDATE and DELETE
+// are blocked by trigger, same as OrderAuditLog.
+model AdminAuditLog {
+  id        String   @id @default(uuid())
+  // "operator:<operatorId>" on success, "unknown:<email>" on a failed
+  // login where we can't yet attribute the attempt to a real operator.
+  actor     String
+  action    String
+  ip        String?
+  userAgent String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
