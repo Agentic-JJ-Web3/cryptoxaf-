@@ -28,7 +28,7 @@ CREATE TABLE "Order" (
     "chain" "Chain" NOT NULL,
     "destinationAddress" TEXT NOT NULL,
     "xafAmount" INTEGER NOT NULL,
-    "usdtAmount" BIGINT NOT NULL,
+    "usdtAmount" DECIMAL(38,0) NOT NULL,
     "rateSnapshotId" TEXT NOT NULL,
     "quoteExpiresAt" TIMESTAMP(3) NOT NULL,
     "paymentReference" TEXT,

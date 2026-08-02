@@ -1,4 +1,9 @@
 const { isLegalTransition } = require('./stateMachine');
+const { decimalToBigInt } = require('../db/money');
+
+function withBigIntUsdtAmount(order) {
+  return { ...order, usdtAmount: decimalToBigInt(order.usdtAmount) };
+}
 
 class OrderNotFoundError extends Error {
   constructor(orderId) {
@@ -29,7 +34,7 @@ async function createOrder(prisma, { reference, chain, destinationAddress, xafAm
         chain,
         destinationAddress,
         xafAmount,
-        usdtAmount,
+        usdtAmount: usdtAmount.toString(),
         quoteExpiresAt,
         rateSnapshotId: snapshot.id,
       },
@@ -46,7 +51,7 @@ async function createOrder(prisma, { reference, chain, destinationAddress, xafAm
       },
     });
 
-    return order;
+    return withBigIntUsdtAmount(order);
   });
 }
 
@@ -87,7 +92,7 @@ async function transitionOrder(prisma, { orderId, toStatus, actorType, actor, no
       },
     });
 
-    return updated;
+    return withBigIntUsdtAmount(updated);
   });
 }
 

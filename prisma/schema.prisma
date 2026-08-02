@@ -66,8 +66,12 @@ model Order {
 
   // What the customer types and what leaves their MoMo. No minor unit in XAF.
   xafAmount          Int
-  // Base units for `chain`'s USDT contract (6dp Tron, 18dp BSC) — see src/config/chains.js.
-  usdtAmount         BigInt       @db.Decimal(38, 0)
+  // Base units for `chain`'s USDT contract (6dp Tron, 18dp BSC) — see
+  // src/config/chains.js. NUMERIC(38,0), not BIGINT: 18dp BSC amounts
+  // overflow int8 past ~9.2 USDT. Exact integer column, no float, wide
+  // enough — src/db/money.js converts to/from a native BigInt at the
+  // service boundary so the rest of the app never touches Decimal.
+  usdtAmount         Decimal      @db.Decimal(38, 0)
 
   rateSnapshotId     String       @unique
   rateSnapshot       RateSnapshot @relation(fields: [rateSnapshotId], references: [id])
