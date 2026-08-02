@@ -1,0 +1,108 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Chain {
+  TRON
+  BSC
+}
+
+enum OrderStatus {
+  QUOTED
+  AWAITING_PAYMENT
+  PAYMENT_CLAIMED
+  PAYMENT_VERIFIED
+  COMPLETED
+  EXPIRED
+  REFUND_DUE
+  REFUNDED
+}
+
+enum ActorType {
+  SYSTEM
+  CUSTOMER
+  OPERATOR
+}
+
+// Captures the live pricing inputs behind a single quote so a quoted rate
+// can always be reconstructed and audited after the market has moved on.
+model RateSnapshot {
+  id               String   @id @default(uuid())
+  chain            Chain
+  // XAF per 1 USDT, scaled by 1e6, e.g. 650_500_000 == 650.5 XAF/USDT.
+  marketRateMicros BigInt
+  // Flat, per-order network fee in XAF at capture time (gas cost + buffer).
+  networkFeeXaf    Int
+  // Margin applied on top of market rate, in basis points (150 == 1.50%).
+  targetMarginBps  Int
+  // marketRateMicros * (1 + targetMarginBps / 10000), precomputed at capture time.
+  quotedRateMicros BigInt
+  capturedAt       DateTime @default(now())
+
+  order            Order?
+
+  @@index([capturedAt])
+}
+
+// The swap order. `status` only moves along the legal edges of the state
+// machine and can never leave a terminal state — both enforced by a
+// trigger installed in the migration, not by application code alone.
+model Order {
+  id                 String      @id @default(uuid())
+  // Bearer token for order lookup; never log unmasked (see CLAUDE.md Security).
+  reference          String      @unique
+  status             OrderStatus @default(QUOTED)
+  chain              Chain
+
+  destinationAddress String
+
+  // What the customer types and what leaves their MoMo. No minor unit in XAF.
+  xafAmount          Int
+  // Base units for `chain`'s USDT contract (6dp Tron, 18dp BSC) — see src/config/chains.js.
+  usdtAmount         BigInt
+
+  rateSnapshotId     String       @unique
+  rateSnapshot       RateSnapshot @relation(fields: [rateSnapshotId], references: [id])
+
+  quoteExpiresAt     DateTime
+
+  // Customer-submitted MoMo transaction id (PAYMENT_CLAIMED).
+  paymentReference   String?
+  // On-chain payout hash, recorded together with the COMPLETED transition.
+  payoutTxHash       String?      @unique
+  // Why an order was sent to REFUND_DUE.
+  refundReason       String?
+
+  auditLogs          OrderAuditLog[]
+
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  @@index([status])
+}
+
+// Append-only history of every status transition. UPDATE and DELETE are
+// blocked by trigger at the database level.
+model OrderAuditLog {
+  id         String       @id @default(uuid())
+  orderId    String
+  order      Order        @relation(fields: [orderId], references: [id])
+  fromStatus OrderStatus?
+  toStatus   OrderStatus
+  actorType  ActorType
+  // e.g. "system", "customer", "operator:<operatorId>" — never a bare MoMo number.
+  actor      String
+  note       String?
+  createdAt  DateTime     @default(now())
+
+  @@index([orderId])
+  @@index([createdAt])
+}
