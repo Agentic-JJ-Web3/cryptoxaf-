@@ -100,6 +100,15 @@ async function previewQuote(prisma, { xafAmount, destinationAddress }) {
   };
 }
 
+async function getPaymentInstructions(prisma) {
+  const settings = await prisma.platformSettings.findUniqueOrThrow({ where: { id: 'default' } });
+  return {
+    momoNetwork: settings.momoNetwork,
+    momoNumber: settings.momoNumber,
+    momoAccountName: settings.momoAccountName,
+  };
+}
+
 async function createOrderWithUniqueReference(prisma, buildData) {
   for (let attempt = 0; attempt < MAX_REFERENCE_ATTEMPTS; attempt += 1) {
     const reference = generateOrderReference();
@@ -159,15 +168,9 @@ async function createQuoteOrder(prisma, { xafAmount, destinationAddress, bscConf
     note: 'payment instructions issued',
   });
 
-  const settings = await prisma.platformSettings.findUniqueOrThrow({ where: { id: 'default' } });
-
   return {
     order: serializeOrder(awaitingPayment),
-    payment: {
-      momoNetwork: settings.momoNetwork,
-      momoNumber: settings.momoNumber,
-      momoAccountName: settings.momoAccountName,
-    },
+    payment: await getPaymentInstructions(prisma),
   };
 }
 
@@ -209,7 +212,12 @@ async function getOrderStatus(prisma, reference) {
     include: { rateSnapshot: true },
   });
 
-  return serializeOrder({ ...current, usdtAmount: decimalToBigInt(current.usdtAmount) });
+  return {
+    order: serializeOrder({ ...current, usdtAmount: decimalToBigInt(current.usdtAmount) }),
+    // Only meaningful pre-payment, but harmless (and one less round trip
+    // for the frontend) to include whenever it's still relevant.
+    payment: current.status === 'AWAITING_PAYMENT' ? await getPaymentInstructions(prisma) : null,
+  };
 }
 
 module.exports = {
