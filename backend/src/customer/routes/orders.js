@@ -30,11 +30,11 @@ function createOrdersRouter({ prisma }) {
   // requires no auth beyond knowing it, same trust model as the whole flow.
   router.get('/:reference', async (req, res, next) => {
     try {
-      const order = await getOrderStatus(prisma, req.params.reference);
-      if (!order) {
+      const result = await getOrderStatus(prisma, req.params.reference);
+      if (!result) {
         return res.status(404).json({ error: `Order ${req.params.reference} not found` });
       }
-      res.json({ order });
+      res.json(result);
     } catch (err) {
       next(err);
     }
