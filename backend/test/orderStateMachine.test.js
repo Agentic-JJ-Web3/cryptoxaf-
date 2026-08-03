@@ -1,4 +1,4 @@
-const { prisma, resetDb, orderInput } = require('./testDb');
+const { prisma, resetDb, orderInput, createOrderAt } = require('./testDb');
 const { createOrder, transitionOrder, IllegalTransitionError } = require('../src/orders/orderService');
 const { usdtDecimalsFor } = require('../src/config/chains');
 
@@ -10,32 +10,7 @@ afterAll(async () => {
   await prisma.$disconnect();
 });
 
-async function createAt(status, overrides = {}) {
-  const order = await createOrder(prisma, orderInput(overrides));
-  if (status === 'QUOTED') return order;
-
-  const path = {
-    AWAITING_PAYMENT: ['AWAITING_PAYMENT'],
-    PAYMENT_CLAIMED: ['AWAITING_PAYMENT', 'PAYMENT_CLAIMED'],
-    PAYMENT_VERIFIED: ['AWAITING_PAYMENT', 'PAYMENT_CLAIMED', 'PAYMENT_VERIFIED'],
-    COMPLETED: ['AWAITING_PAYMENT', 'PAYMENT_CLAIMED', 'PAYMENT_VERIFIED', 'COMPLETED'],
-    REFUND_DUE: ['AWAITING_PAYMENT', 'PAYMENT_CLAIMED', 'REFUND_DUE'],
-    REFUNDED: ['AWAITING_PAYMENT', 'PAYMENT_CLAIMED', 'REFUND_DUE', 'REFUNDED'],
-  }[status];
-
-  let current = order;
-  for (const toStatus of path) {
-    current = await transitionOrder(prisma, {
-      orderId: order.id,
-      toStatus,
-      actorType: 'OPERATOR',
-      actor: 'operator:test',
-      note: `advance to ${toStatus}`,
-      data: toStatus === 'COMPLETED' ? { payoutTxHash: `0xhash-${order.id}` } : {},
-    });
-  }
-  return current;
-}
+const createAt = createOrderAt;
 
 describe('order creation', () => {
   test('creates an order with its rate snapshot and an initial audit log row', async () => {

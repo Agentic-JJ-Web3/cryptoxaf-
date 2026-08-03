@@ -2,6 +2,8 @@ require('dotenv').config();
 
 const { createPrismaClient } = require('../src/db/client');
 const { toUsdtBaseUnits } = require('../src/config/chains');
+const { createOrder, transitionOrder } = require('../src/orders/orderService');
+const { hashPassword } = require('../src/admin/password');
 
 if (!process.env.TEST_DATABASE_URL) {
   throw new Error('TEST_DATABASE_URL is not set — refusing to run against an unspecified database');
@@ -14,8 +16,10 @@ const prisma = createPrismaClient(process.env.TEST_DATABASE_URL);
 
 async function resetDb() {
   // TRUNCATE fires no FOR EACH ROW triggers, so this bypasses the
-  // audit log's append-only guard cleanly between tests.
-  await prisma.$executeRawUnsafe('TRUNCATE TABLE "OrderAuditLog", "Order", "RateSnapshot" CASCADE');
+  // append-only log guards cleanly between tests.
+  await prisma.$executeRawUnsafe(
+    'TRUNCATE TABLE "OrderAuditLog", "Order", "RateSnapshot", "AdminAuditLog", "Operator" CASCADE',
+  );
 }
 
 let referenceCounter = 0;
@@ -49,4 +53,67 @@ function orderInput(overrides = {}) {
   };
 }
 
-module.exports = { prisma, resetDb, orderInput, rateSnapshotInput };
+// Walks a fresh order through the legal transitions needed to land on
+// `status`, so tests can start from any state without re-deriving the path
+// through the state machine themselves.
+const PATH_TO_STATUS = {
+  QUOTED: [],
+  AWAITING_PAYMENT: ['AWAITING_PAYMENT'],
+  PAYMENT_CLAIMED: ['AWAITING_PAYMENT', 'PAYMENT_CLAIMED'],
+  PAYMENT_VERIFIED: ['AWAITING_PAYMENT', 'PAYMENT_CLAIMED', 'PAYMENT_VERIFIED'],
+  COMPLETED: ['AWAITING_PAYMENT', 'PAYMENT_CLAIMED', 'PAYMENT_VERIFIED', 'COMPLETED'],
+  REFUND_DUE: ['AWAITING_PAYMENT', 'PAYMENT_CLAIMED', 'REFUND_DUE'],
+  REFUNDED: ['AWAITING_PAYMENT', 'PAYMENT_CLAIMED', 'REFUND_DUE', 'REFUNDED'],
+  EXPIRED: ['EXPIRED'],
+};
+
+async function createOrderAt(status, overrides = {}) {
+  const order = await createOrder(prisma, orderInput(overrides));
+  let current = order;
+
+  for (const toStatus of PATH_TO_STATUS[status]) {
+    current = await transitionOrder(prisma, {
+      orderId: order.id,
+      toStatus,
+      actorType: 'OPERATOR',
+      actor: 'operator:fixture',
+      note: `advance to ${toStatus}`,
+      data: {
+        ...(toStatus === 'PAYMENT_CLAIMED'
+          ? { paymentReference: 'MP-FIXTURE-TX', customerMomoNumber: '+237600000000' }
+          : {}),
+        ...(toStatus === 'COMPLETED' ? { payoutTxHash: `0xhash-${order.id}` } : {}),
+      },
+    });
+  }
+
+  return current;
+}
+
+let operatorCounter = 0;
+async function createTestOperator(overrides = {}) {
+  operatorCounter += 1;
+  const email = overrides.email ?? `operator${operatorCounter}-${Date.now()}@test.local`;
+  const password = overrides.password ?? 'correct horse battery staple';
+  const passwordHash = await hashPassword(password);
+
+  const operator = await prisma.operator.create({
+    data: {
+      email,
+      passwordHash,
+      displayName: overrides.displayName ?? 'Test Operator',
+      isActive: overrides.isActive ?? true,
+    },
+  });
+
+  return { operator, password };
+}
+
+module.exports = {
+  prisma,
+  resetDb,
+  orderInput,
+  rateSnapshotInput,
+  createOrderAt,
+  createTestOperator,
+};
