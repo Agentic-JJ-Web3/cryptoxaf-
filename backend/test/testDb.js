@@ -109,6 +109,29 @@ async function createTestOperator(overrides = {}) {
   return { operator, password };
 }
 
+// Not part of resetDb()'s TRUNCATE list — this is config, not per-test
+// data, and the pricing tests want it to persist for the whole file.
+async function seedPlatformSettings(overrides = {}) {
+  const data = {
+    xafUsdtRateMicros: 650_000_000n,
+    tronNetworkFeeXaf: 500,
+    bscNetworkFeeXaf: 200,
+    targetMarginBps: 150,
+    rateTtlSeconds: 86400,
+    momoNetwork: 'MTN',
+    momoNumber: '677000000',
+    momoAccountName: 'Test Account',
+    updatedBy: 'test fixture',
+    ...overrides,
+  };
+
+  return prisma.platformSettings.upsert({
+    where: { id: 'default' },
+    update: data,
+    create: { id: 'default', ...data },
+  });
+}
+
 module.exports = {
   prisma,
   resetDb,
@@ -116,4 +139,5 @@ module.exports = {
   rateSnapshotInput,
   createOrderAt,
   createTestOperator,
+  seedPlatformSettings,
 };

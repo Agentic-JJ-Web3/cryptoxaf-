@@ -34,11 +34,14 @@
     "@prisma/client": "^7.9.1",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "ethers": "^6.17.0",
     "express": "^5.2.1",
     "express-rate-limit": "^8.6.1",
     "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.22.0",
+    "tronweb": "^6.4.0",
     "zod": "^4.4.3"
   }
 }

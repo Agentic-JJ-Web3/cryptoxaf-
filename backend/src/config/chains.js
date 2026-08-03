@@ -6,11 +6,20 @@ const CHAINS = Object.freeze({
     key: 'TRON',
     label: 'Tron (TRC-20)',
     usdtDecimals: 6,
+    // Official TRC-20 USDT contract. Sending here (instead of *to* an
+    // address the contract governs) is unrecoverable — block outright.
+    usdtContractAddress: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t',
+    rpcUrl: process.env.TRON_RPC_URL || 'https://api.trongrid.io',
+    explorerTxUrl: (txHash) => `https://tronscan.org/#/transaction/${txHash}`,
   }),
   BSC: Object.freeze({
     key: 'BSC',
     label: 'BNB Smart Chain (BEP-20)',
     usdtDecimals: 18,
+    // Official Binance-Peg USDT (BEP-20) contract.
+    usdtContractAddress: '0x55d398326f99059fF775485246999027B3197955',
+    rpcUrl: process.env.BSC_RPC_URL || 'https://bsc-dataseed.binance.org',
+    explorerTxUrl: (txHash) => `https://bscscan.com/tx/${txHash}`,
   }),
 });
 
