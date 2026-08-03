@@ -32,6 +32,11 @@ enum ActorType {
   OPERATOR
 }
 
+enum MomoNetwork {
+  MTN
+  ORANGE
+}
+
 // Captures the live pricing inputs behind a single quote so a quoted rate
 // can always be reconstructed and audited after the market has moved on.
 model RateSnapshot {
@@ -127,6 +132,29 @@ model Operator {
   createdAt    DateTime @default(now())
 
   @@index([email])
+}
+
+// Single-row table (id is always "default") holding the operator-configured
+// inputs the pricing engine reads. This is the manual `RateProvider` — the
+// same "manual implementation only, for now" pattern as PaymentCollector
+// and PayoutExecutor. Live feeds (Binance P2P, gas oracles) come later and
+// slot in behind the same read shape without changing callers.
+model PlatformSettings {
+  id                String      @id @default("default")
+  // XAF per 1 USDT, scaled by 1e6 — same representation as RateSnapshot.
+  xafUsdtRateMicros BigInt
+  tronNetworkFeeXaf Int
+  bscNetworkFeeXaf  Int
+  // Basis points (150 == 1.50%), clamped at read time to sane bounds
+  // regardless of what's stored here — see src/pricing/rateProvider.js.
+  targetMarginBps   Int
+  // How long this row may be trusted before quoting refuses to proceed.
+  // Generous by default because a human, not a live feed, updates this.
+  rateTtlSeconds    Int         @default(86400)
+  momoNetwork       MomoNetwork
+  momoNumber        String
+  updatedAt         DateTime    @updatedAt
+  updatedBy         String?
 }
 
 // Append-only security/audit trail for admin actions that aren't order
