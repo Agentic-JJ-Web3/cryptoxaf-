@@ -153,6 +153,9 @@ model PlatformSettings {
   rateTtlSeconds    Int         @default(86400)
   momoNetwork       MomoNetwork
   momoNumber        String
+  // The name registered on momoNumber, shown alongside it so the customer
+  // can confirm it matches what their MoMo app shows before paying.
+  momoAccountName   String
   updatedAt         DateTime    @updatedAt
   updatedBy         String?
 }
