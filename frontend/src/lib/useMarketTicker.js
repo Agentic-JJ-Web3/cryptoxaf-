@@ -12,6 +12,8 @@ export function useMarketTicker() {
     marketRateMicros: null,
     tronNetworkFeeXaf: null,
     bscNetworkFeeXaf: null,
+    isOpen: null,
+    reopenLabel: null,
     secondsAgo: 0,
   });
   const fetchedAtRef = useRef(null);
@@ -29,6 +31,8 @@ export function useMarketTicker() {
           marketRateMicros: res.marketRateMicros,
           tronNetworkFeeXaf: res.tronNetworkFeeXaf,
           bscNetworkFeeXaf: res.bscNetworkFeeXaf,
+          isOpen: res.isOpen,
+          reopenLabel: res.reopenLabel,
           secondsAgo: 0,
         });
       } catch {
