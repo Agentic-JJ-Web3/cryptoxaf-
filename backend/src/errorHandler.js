@@ -3,7 +3,7 @@ const { OrderNotFoundError, IllegalTransitionError } = require('./orders/orderSe
 const { InvalidCredentialsError } = require('./admin/errors');
 const { RateUnavailableError, AmountTooSmallError } = require('./pricing/errors');
 const { AddressInvalidError, AddressBlockedError, AddressVerificationUnavailableError } = require('./validation/errors');
-const { InvalidAmountError, BscConfirmationRequiredError } = require('./customer/errors');
+const { InvalidAmountError, BscConfirmationRequiredError, PlatformClosedError } = require('./customer/errors');
 
 // eslint-disable-next-line no-unused-vars
 function errorHandler(err, req, res, next) {
@@ -33,6 +33,9 @@ function errorHandler(err, req, res, next) {
   }
   if (err instanceof RateUnavailableError || err instanceof AddressVerificationUnavailableError) {
     return res.status(503).json({ error: err.message });
+  }
+  if (err instanceof PlatformClosedError) {
+    return res.status(403).json({ error: err.message });
   }
 
   // eslint-disable-next-line no-console

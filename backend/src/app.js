@@ -9,6 +9,8 @@ const { createAuthRouter } = require('./admin/routes/auth');
 const { createOrdersRouter: createAdminOrdersRouter } = require('./admin/routes/orders');
 const { createQuotesRouter } = require('./customer/routes/quotes');
 const { createOrdersRouter: createCustomerOrdersRouter } = require('./customer/routes/orders');
+const { createNotifyRouter } = require('./customer/routes/notify');
+const { createNotifyRateLimit } = require('./customer/middleware/rateLimit');
 const { errorHandler } = require('./errorHandler');
 
 // Builds a configured Express app without binding a port, so tests can
@@ -44,6 +46,7 @@ function createApp({ prisma, jwtSecret, isProduction = false, corsOrigin }) {
 
   app.use('/api/quotes', createQuotesRouter({ prisma }));
   app.use('/api/orders', createCustomerOrdersRouter({ prisma }));
+  app.use('/api/notify', createNotifyRouter({ prisma, notifyRateLimit: createNotifyRateLimit() }));
 
   app.use(errorHandler);
 

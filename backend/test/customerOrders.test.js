@@ -28,6 +28,8 @@ describe('GET /api/quotes/market', () => {
     expect(res.body.marketRateMicros).toBe('650000000');
     expect(res.body.tronNetworkFeeXaf).toBe(500);
     expect(res.body.bscNetworkFeeXaf).toBe(200);
+    expect(typeof res.body.isOpen).toBe('boolean');
+    expect(typeof res.body.reopenLabel).toBe('string');
   });
 
   test('fails closed when no rate is configured', async () => {
@@ -70,13 +72,24 @@ describe('POST /api/quotes/preview', () => {
     expect(res.body.amountError).toMatch(/amount/i);
   });
 
-  test('reports an address-in-progress state instead of erroring on empty input', async () => {
+  test('with an amount but no address yet, returns a provisional estimate on the cheapest chain', async () => {
     const app = buildTestApp();
     const res = await request(app).post('/api/quotes/preview').send({ xafAmount: 32500, destinationAddress: '' });
 
     expect(res.status).toBe(200);
     expect(res.body.addressValid).toBe(false);
-    expect(res.body.usdtAmount).toBeUndefined();
+    expect(res.body.provisional).toBe(true);
+    expect(res.body.chain).toBe('BSC'); // 200 XAF fee vs Tron's 500 in the seeded fixture
+    expect(res.body.usdtAmount).toBeDefined();
+  });
+
+  test('reports an address-in-progress state instead of erroring on fully empty input', async () => {
+    const app = buildTestApp();
+    const res = await request(app).post('/api/quotes/preview').send({ xafAmount: 0, destinationAddress: '' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.addressValid).toBe(false);
+    expect(res.body.usdtAmount).toBeNull();
   });
 
   test('flags that BSC needs explicit confirmation', async () => {
@@ -187,11 +200,20 @@ describe('order lifecycle: claim payment and status', () => {
     expect(status.body.order.rateSnapshot.networkFeeXaf).toBe(500);
   });
 
-  test('claim-payment requires both fields', async () => {
+  test('claim-payment requires a MoMo transaction ID but not a MoMo number', async () => {
+    // The payment screen only collects the transaction ID — the operator
+    // sees the sender's number directly in their own MoMo app.
     const app = buildTestApp();
-    const reference = await createTestOrder(app);
-    const res = await request(app).post(`/api/orders/${reference}/claim-payment`).send({ momoTxId: 'x' });
-    expect(res.status).toBe(400);
+
+    const missingTxId = await request(app)
+      .post(`/api/orders/${await createTestOrder(app)}/claim-payment`)
+      .send({});
+    expect(missingTxId.status).toBe(400);
+
+    const okWithoutMomoNumber = await request(app)
+      .post(`/api/orders/${await createTestOrder(app)}/claim-payment`)
+      .send({ momoTxId: 'MP240731.4471.882610' });
+    expect(okWithoutMomoNumber.status).toBe(200);
   });
 
   test('claim-payment on an unknown reference returns 404', async () => {
@@ -223,5 +245,40 @@ describe('order lifecycle: claim payment and status', () => {
       .post(`/api/orders/${reference}/claim-payment`)
       .send({ momoTxId: 'x', customerMomoNumber: '+237600000000' });
     expect(claim.status).toBe(409);
+  });
+});
+
+describe('POST /api/notify', () => {
+  test('captures a phone number for manual follow-up', async () => {
+    const app = buildTestApp();
+    const res = await request(app).post('/api/notify').send({ phone: '677 12 345 67' });
+
+    expect(res.status).toBe(201);
+    const rows = await prisma.notifyRequest.findMany();
+    expect(rows).toHaveLength(1);
+    expect(rows[0].phone).toBe('677 12 345 67');
+  });
+
+  test('rejects a missing or malformed phone number', async () => {
+    const app = buildTestApp();
+    const missing = await request(app).post('/api/notify').send({});
+    expect(missing.status).toBe(400);
+
+    const malformed = await request(app).post('/api/notify').send({ phone: 'call me maybe' });
+    expect(malformed.status).toBe(400);
+  });
+
+  test('rate-limits repeated requests from the same client', async () => {
+    const app = buildTestApp();
+    const attempts = [];
+    for (let i = 0; i < 6; i += 1) {
+      attempts.push(
+        // eslint-disable-next-line no-await-in-loop
+        await request(app).post('/api/notify').send({ phone: '677000000' }),
+      );
+    }
+    const statuses = attempts.map((r) => r.status);
+    expect(statuses.slice(0, 5).every((s) => s === 201)).toBe(true);
+    expect(statuses[5]).toBe(429);
   });
 });

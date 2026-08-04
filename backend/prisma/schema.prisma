@@ -52,7 +52,7 @@ model RateSnapshot {
   quotedRateMicros BigInt
   capturedAt       DateTime @default(now())
 
-  order            Order?
+  order Order?
 
   @@index([capturedAt])
 }
@@ -61,27 +61,27 @@ model RateSnapshot {
 // machine and can never leave a terminal state — both enforced by a
 // trigger installed in the migration, not by application code alone.
 model Order {
-  id                 String      @id @default(uuid())
+  id        String      @id @default(uuid())
   // Bearer token for order lookup; never log unmasked (see CLAUDE.md Security).
-  reference          String      @unique
-  status             OrderStatus @default(QUOTED)
-  chain              Chain
+  reference String      @unique
+  status    OrderStatus @default(QUOTED)
+  chain     Chain
 
   destinationAddress String
 
   // What the customer types and what leaves their MoMo. No minor unit in XAF.
-  xafAmount          Int
+  xafAmount  Int
   // Base units for `chain`'s USDT contract (6dp Tron, 18dp BSC) — see
   // src/config/chains.js. NUMERIC(38,0), not BIGINT: 18dp BSC amounts
   // overflow int8 past ~9.2 USDT. Exact integer column, no float, wide
   // enough — src/db/money.js converts to/from a native BigInt at the
   // service boundary so the rest of the app never touches Decimal.
-  usdtAmount         Decimal      @db.Decimal(38, 0)
+  usdtAmount Decimal @db.Decimal(38, 0)
 
-  rateSnapshotId     String       @unique
-  rateSnapshot       RateSnapshot @relation(fields: [rateSnapshotId], references: [id])
+  rateSnapshotId String       @unique
+  rateSnapshot   RateSnapshot @relation(fields: [rateSnapshotId], references: [id])
 
-  quoteExpiresAt     DateTime
+  quoteExpiresAt DateTime
 
   // Customer-submitted MoMo transaction id (PAYMENT_CLAIMED).
   paymentReference   String?
@@ -89,14 +89,14 @@ model Order {
   // operator can cross-check it in their own MoMo app. Never log unmasked.
   customerMomoNumber String?
   // On-chain payout hash, recorded together with the COMPLETED transition.
-  payoutTxHash       String?      @unique
+  payoutTxHash       String? @unique
   // Why an order was sent to REFUND_DUE.
   refundReason       String?
 
-  auditLogs          OrderAuditLog[]
+  auditLogs OrderAuditLog[]
 
-  createdAt          DateTime     @default(now())
-  updatedAt          DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([status])
 }
@@ -158,6 +158,19 @@ model PlatformSettings {
   momoAccountName   String
   updatedAt         DateTime    @updatedAt
   updatedBy         String?
+}
+
+// "Notify me when you reopen" capture from the closed-state screen.
+// No SMS integration yet — an operator follows these up by hand, the
+// same "manual for now" pattern as everything else that isn't explicitly
+// automated.
+model NotifyRequest {
+  id         String    @id @default(uuid())
+  phone      String
+  notifiedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([createdAt])
 }
 
 // Append-only security/audit trail for admin actions that aren't order

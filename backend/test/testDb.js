@@ -18,7 +18,7 @@ async function resetDb() {
   // TRUNCATE fires no FOR EACH ROW triggers, so this bypasses the
   // append-only log guards cleanly between tests.
   await prisma.$executeRawUnsafe(
-    'TRUNCATE TABLE "OrderAuditLog", "Order", "RateSnapshot", "AdminAuditLog", "Operator" CASCADE',
+    'TRUNCATE TABLE "OrderAuditLog", "Order", "RateSnapshot", "AdminAuditLog", "Operator", "NotifyRequest" CASCADE',
   );
 }
 
