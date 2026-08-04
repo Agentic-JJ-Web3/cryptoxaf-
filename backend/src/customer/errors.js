@@ -12,4 +12,11 @@ class BscConfirmationRequiredError extends Error {
   }
 }
 
-module.exports = { InvalidAmountError, BscConfirmationRequiredError };
+class PlatformClosedError extends Error {
+  constructor(reopenLabel) {
+    super(`We're not taking new orders right now. Reopens ${reopenLabel}.`);
+    this.name = 'PlatformClosedError';
+  }
+}
+
+module.exports = { InvalidAmountError, BscConfirmationRequiredError, PlatformClosedError };

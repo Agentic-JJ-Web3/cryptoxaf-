@@ -11,7 +11,8 @@ const {
   detectChainAndShapeError,
 } = require('../validation/address');
 const { AddressInvalidError, AddressBlockedError } = require('../validation/errors');
-const { InvalidAmountError, BscConfirmationRequiredError } = require('./errors');
+const { isOpenNow, reopenLabel } = require('../config/hours');
+const { InvalidAmountError, BscConfirmationRequiredError, PlatformClosedError } = require('./errors');
 
 const QUOTE_TTL_MS = 15 * 60 * 1000;
 const MAX_REFERENCE_ATTEMPTS = 5;
@@ -167,6 +168,12 @@ async function createOrderWithUniqueReference(prisma, buildData) {
 // "Continue to payment". Re-validates everything the preview already
 // showed, since client-side state is never trusted for order creation.
 async function createQuoteOrder(prisma, { xafAmount, destinationAddress, bscConfirmed }) {
+  // Cheapest possible check first — no RPC or DB work wasted on an order
+  // that can't be placed at all right now.
+  if (!isOpenNow()) {
+    throw new PlatformClosedError(reopenLabel());
+  }
+
   if (!isPositiveInteger(xafAmount)) {
     throw new InvalidAmountError();
   }

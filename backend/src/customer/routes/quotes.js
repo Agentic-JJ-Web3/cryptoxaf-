@@ -2,6 +2,7 @@ const express = require('express');
 const { z } = require('zod');
 const { previewQuote } = require('../customerOrderService');
 const { getMarketRate } = require('../../pricing/rateProvider');
+const { isOpenNow, reopenLabel } = require('../../config/hours');
 
 // Deliberately lenient: this backs live typing on the swap screen, where
 // "amount not entered yet" or "address incomplete" are normal in-progress
@@ -35,6 +36,8 @@ function createQuotesRouter({ prisma }) {
         tronNetworkFeeXaf: rate.tronNetworkFeeXaf,
         bscNetworkFeeXaf: rate.bscNetworkFeeXaf,
         updatedAt: rate.updatedAt,
+        isOpen: isOpenNow(),
+        reopenLabel: reopenLabel(),
       });
     } catch (err) {
       next(err);
