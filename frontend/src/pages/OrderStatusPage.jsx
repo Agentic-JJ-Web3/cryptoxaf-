@@ -7,6 +7,7 @@ import { api, ApiError } from '../api/client';
 import { formatXaf, formatUsdtBaseUnits, headTail } from '../lib/format';
 import { USDT_DECIMALS, CHAIN_LABELS } from '../lib/chains';
 import { stageFromStatus } from '../lib/orderStage';
+import { saveOrderToHistory } from '../lib/orderHistory';
 
 const POLL_MS = 6000;
 
@@ -39,6 +40,15 @@ export default function OrderStatusPage() {
         const result = await api.getOrder(reference);
         if (cancelled) return;
         setState({ status: 'ready', order: result.order, error: null });
+        // Keeps device-local history in sync even for orders reached
+        // directly (a bookmark, a shared link) rather than via /orders.
+        saveOrderToHistory({
+          reference: result.order.reference,
+          xafAmount: result.order.xafAmount,
+          chain: result.order.chain,
+          status: result.order.status,
+          createdAt: result.order.createdAt,
+        });
       } catch (err) {
         if (cancelled) return;
         const message = err instanceof ApiError ? err.message : 'Something went wrong loading this order.';
@@ -307,6 +317,9 @@ export default function OrderStatusPage() {
           </a>
         )}
         <div className="mt-3 text-center text-xs text-muted">Settles in 5–15 minutes · Mon–Sat, 7am–9pm</div>
+        <Link to="/orders" className="mt-3 block text-center text-xs font-semibold text-vault">
+          View all orders on this device
+        </Link>
       </div>
     </Shell>
   );
