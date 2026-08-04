@@ -6,6 +6,19 @@ const { AddressInvalidError, AddressBlockedError, AddressVerificationUnavailable
 const TRON_SHAPE = /^T[1-9A-HJ-NP-Za-km-z]{33}$/;
 const EVM_SHAPE = /^0x[a-fA-F0-9]{40}$/;
 
+// Without this, a slow or rate-limited public RPC hangs on Node's default
+// socket timeout (tens of seconds) before the fail-closed error even
+// fires — a terrible customer wait for what should be a fast rejection.
+const RPC_TIMEOUT_MS = 8000;
+
+function withTimeout(promise, ms) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error('RPC call timed out')), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
 let tronWeb;
 function getTronWeb() {
   if (!tronWeb) tronWeb = new TronWeb({ fullHost: CHAINS.TRON.rpcUrl });
@@ -51,10 +64,10 @@ function isKnownUsdtContract(chain, address) {
 async function isDeployedContract(chain, address) {
   try {
     if (chain === 'TRON') {
-      const info = await getTronWeb().trx.getContract(address);
+      const info = await withTimeout(getTronWeb().trx.getContract(address), RPC_TIMEOUT_MS);
       return !!info?.bytecode;
     }
-    const code = await getBscProvider().getCode(address);
+    const code = await withTimeout(getBscProvider().getCode(address), RPC_TIMEOUT_MS);
     return code !== '0x';
   } catch {
     throw new AddressVerificationUnavailableError();

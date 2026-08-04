@@ -20,6 +20,28 @@ afterAll(async () => {
   await prisma.$disconnect();
 });
 
+describe('GET /api/quotes/market', () => {
+  test('returns the market rate with no address needed', async () => {
+    const app = buildTestApp();
+    const res = await request(app).get('/api/quotes/market');
+    expect(res.status).toBe(200);
+    expect(res.body.marketRateMicros).toBe('650000000');
+    expect(res.body.tronNetworkFeeXaf).toBe(500);
+    expect(res.body.bscNetworkFeeXaf).toBe(200);
+  });
+
+  test('fails closed when no rate is configured', async () => {
+    await prisma.platformSettings.deleteMany({ where: { id: 'default' } });
+    try {
+      const app = buildTestApp();
+      const res = await request(app).get('/api/quotes/market');
+      expect(res.status).toBe(503);
+    } finally {
+      await seedPlatformSettings();
+    }
+  });
+});
+
 describe('POST /api/quotes/preview', () => {
   test('returns a live quote for a valid address and amount', async () => {
     const app = buildTestApp();
@@ -30,8 +52,22 @@ describe('POST /api/quotes/preview', () => {
     expect(res.status).toBe(200);
     expect(res.body.addressValid).toBe(true);
     expect(res.body.chain).toBe('TRON');
-    expect(res.body.quote.usdtAmount).toBeDefined();
+    expect(res.body.rate.networkFeeXaf).toBe(500);
+    expect(res.body.usdtAmount).toBeDefined();
     expect(res.body.amountError).toBeNull();
+  });
+
+  test('address valid but no amount yet: rate is available, usdtAmount is not', async () => {
+    const app = buildTestApp();
+    const res = await request(app)
+      .post('/api/quotes/preview')
+      .send({ destinationAddress: TRON_ADDRESS });
+
+    expect(res.status).toBe(200);
+    expect(res.body.addressValid).toBe(true);
+    expect(res.body.rate.networkFeeXaf).toBe(500);
+    expect(res.body.usdtAmount).toBeNull();
+    expect(res.body.amountError).toMatch(/amount/i);
   });
 
   test('reports an address-in-progress state instead of erroring on empty input', async () => {
@@ -40,7 +76,7 @@ describe('POST /api/quotes/preview', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.addressValid).toBe(false);
-    expect(res.body.quote).toBeNull();
+    expect(res.body.usdtAmount).toBeUndefined();
   });
 
   test('flags that BSC needs explicit confirmation', async () => {

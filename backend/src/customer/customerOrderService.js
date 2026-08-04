@@ -20,13 +20,12 @@ function isPositiveInteger(value) {
   return Number.isInteger(value) && value > 0;
 }
 
-function serializeQuote(quote) {
+function serializeRate(rate) {
   return {
-    networkFeeXaf: quote.networkFeeXaf,
-    marketRateMicros: quote.marketRateMicros.toString(),
-    targetMarginBps: quote.targetMarginBps,
-    quotedRateMicros: quote.quotedRateMicros.toString(),
-    usdtAmount: quote.usdtAmount.toString(),
+    networkFeeXaf: rate.networkFeeXaf,
+    marketRateMicros: rate.marketRateMicros.toString(),
+    targetMarginBps: rate.targetMarginBps,
+    quotedRateMicros: rate.quotedRateMicros.toString(),
   };
 }
 
@@ -57,37 +56,76 @@ function serializeOrder(order) {
   };
 }
 
+function computeUsdtAmount(xafAmount, chain, rate) {
+  if (!isPositiveInteger(xafAmount)) {
+    return { usdtAmount: null, amountError: 'Enter an amount in XAF' };
+  }
+  try {
+    return { usdtAmount: computeQuote({ xafAmount, chain, rate }).usdtAmount.toString(), amountError: null };
+  } catch (err) {
+    if (err instanceof AmountTooSmallError) {
+      return { usdtAmount: null, amountError: err.message };
+    }
+    throw err;
+  }
+}
+
+// Before any wallet address is entered, there's no confirmed chain yet —
+// but the customer has still typed an amount and wants to see roughly
+// what they'll get. Mirrors the design mock's own "assumes the cheapest
+// network" ledger note: quote against whichever chain is currently
+// cheaper, clearly marked provisional, never good enough to submit an
+// order against (createQuoteOrder always re-validates a real address).
+async function previewWithoutAddress(prisma, xafAmount) {
+  const [tron, bsc] = await Promise.all([getRate(prisma, 'TRON'), getRate(prisma, 'BSC')]);
+  const cheaper = tron.networkFeeXaf <= bsc.networkFeeXaf ? { chain: 'TRON', rate: tron } : { chain: 'BSC', rate: bsc };
+  const { usdtAmount, amountError } = computeUsdtAmount(xafAmount, cheaper.chain, cheaper.rate);
+
+  return {
+    addressValid: false,
+    addressError: null,
+    chain: cheaper.chain,
+    addressHead: null,
+    addressTail: null,
+    requiresBscConfirmation: false,
+    rate: serializeRate(cheaper.rate),
+    amountError,
+    usdtAmount,
+    provisional: true,
+  };
+}
+
 // Stateless — nothing is persisted. Used for the live-updating quote as
 // the customer types on the swap screen, so an abandoned swap never
 // leaves a QUOTED row behind.
 async function previewQuote(prisma, { xafAmount, destinationAddress }) {
+  if (!(destinationAddress || '').trim()) {
+    return previewWithoutAddress(prisma, xafAmount);
+  }
+
   let addressInfo;
   try {
     addressInfo = await validateDestinationAddress(destinationAddress);
   } catch (err) {
     if (err instanceof AddressInvalidError || err instanceof AddressBlockedError) {
-      return { addressValid: false, addressError: err.message, chain: null, quote: null };
+      return {
+        addressValid: false,
+        addressError: err.message,
+        chain: null,
+        rate: null,
+        amountError: null,
+        usdtAmount: null,
+        provisional: false,
+      };
     }
     throw err;
   }
 
   const rate = await getRate(prisma, addressInfo.chain);
-
-  let quote = null;
-  let amountError = null;
-  if (isPositiveInteger(xafAmount)) {
-    try {
-      quote = computeQuote({ xafAmount, chain: addressInfo.chain, rate });
-    } catch (err) {
-      if (err instanceof AmountTooSmallError) {
-        amountError = err.message;
-      } else {
-        throw err;
-      }
-    }
-  } else {
-    amountError = 'Enter an amount in XAF';
-  }
+  // Rate/fee only depend on chain, so they're available the moment the
+  // address resolves — the amount, and therefore usdtAmount, is separate
+  // and may still be missing or too small.
+  const { usdtAmount, amountError } = computeUsdtAmount(xafAmount, addressInfo.chain, rate);
 
   return {
     addressValid: true,
@@ -95,8 +133,10 @@ async function previewQuote(prisma, { xafAmount, destinationAddress }) {
     addressHead: addressInfo.head,
     addressTail: addressInfo.tail,
     requiresBscConfirmation: addressInfo.chain === 'BSC',
+    rate: serializeRate(rate),
     amountError,
-    quote: quote ? serializeQuote(quote) : null,
+    usdtAmount,
+    provisional: false,
   };
 }
 

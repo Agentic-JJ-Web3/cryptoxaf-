@@ -10,7 +10,10 @@ const createOrderSchema = z.object({
 
 const claimPaymentSchema = z.object({
   momoTxId: z.string().trim().min(1, 'MoMo transaction ID is required'),
-  customerMomoNumber: z.string().trim().min(1, 'MoMo number is required'),
+  // Not collected on the payment screen — the operator sees the sender's
+  // number directly in their own MoMo app while verifying the transaction
+  // ID. Accepted here only in case a future flow wants to pass it along.
+  customerMomoNumber: z.string().trim().min(1).optional(),
 });
 
 function createOrdersRouter({ prisma }) {
