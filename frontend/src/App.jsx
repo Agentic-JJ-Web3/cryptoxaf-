@@ -6,6 +6,7 @@ import OrderStatusPage from './pages/OrderStatusPage';
 import ClosedPage from './pages/ClosedPage';
 import HowItWorksPage from './pages/HowItWorksPage';
 import OrderHistoryPage from './pages/OrderHistoryPage';
+import AdminApp from './admin/AdminApp';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/closed" element={<ClosedPage />} />
         <Route path="/how-it-works" element={<HowItWorksPage />} />
         <Route path="/orders" element={<OrderHistoryPage />} />
+        <Route path="/admin/*" element={<AdminApp />} />
       </Routes>
     </BrowserRouter>
   );
