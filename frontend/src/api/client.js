@@ -40,6 +40,7 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(data),
     }),
+  notify: (phone) => request('/api/notify', { method: 'POST', body: JSON.stringify({ phone }) }),
 };
 
 export { ApiError };
