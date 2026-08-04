@@ -43,4 +43,32 @@ export const api = {
   notify: (phone) => request('/api/notify', { method: 'POST', body: JSON.stringify({ phone }) }),
 };
 
+export const adminApi = {
+  login: (email, password) =>
+    request('/api/admin/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
+  logout: () => request('/api/admin/auth/logout', { method: 'POST' }),
+  me: () => request('/api/admin/auth/me'),
+  listQueue: () => request('/api/admin/orders'),
+  getOrder: (reference) => request(`/api/admin/orders/${encodeURIComponent(reference)}`),
+  verifyPayment: (reference) =>
+    request(`/api/admin/orders/${encodeURIComponent(reference)}/verify-payment`, { method: 'POST' }),
+  rejectPayment: (reference, reason) =>
+    request(`/api/admin/orders/${encodeURIComponent(reference)}/reject-payment`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    }),
+  completeOrder: (reference, payoutTxHash) =>
+    request(`/api/admin/orders/${encodeURIComponent(reference)}/complete`, {
+      method: 'POST',
+      body: JSON.stringify({ payoutTxHash }),
+    }),
+  refundOrder: (reference, note) =>
+    request(`/api/admin/orders/${encodeURIComponent(reference)}/refund`, {
+      method: 'POST',
+      body: JSON.stringify({ note }),
+    }),
+  getSettings: () => request('/api/admin/settings'),
+  updateSettings: (data) => request('/api/admin/settings', { method: 'PUT', body: JSON.stringify(data) }),
+};
+
 export { ApiError };
