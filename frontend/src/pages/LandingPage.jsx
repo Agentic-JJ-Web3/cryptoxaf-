@@ -160,6 +160,14 @@ export default function LandingPage() {
         <div className="mt-4 text-center text-xs text-muted">
           Settles in 5–15 minutes · Mon–Sat, 7am–9pm · No account needed
         </div>
+        <div className="mt-4 flex items-center justify-center gap-4 text-xs font-medium text-ink-2">
+          <Link to="/how-it-works" className="underline">
+            How it works
+          </Link>
+          <Link to="/orders" className="underline">
+            Order history
+          </Link>
+        </div>
       </section>
     </div>
   );
