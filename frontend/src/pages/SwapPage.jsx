@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams, Navigate } from 'react-router-dom';
 import Masthead from '../components/Masthead';
 import ChainFeeCard from '../components/ChainFeeCard';
 import LedgerRow, { Perforation } from '../components/LedgerRow';
@@ -7,12 +7,16 @@ import { useMarketTicker } from '../lib/useMarketTicker';
 import { useQuotePreview } from '../lib/useQuotePreview';
 import { formatXaf, formatUsdtBaseUnits } from '../lib/format';
 import { USDT_DECIMALS } from '../lib/chains';
+import { saveOrderToHistory, saveAddressToHistory } from '../lib/orderHistory';
 import { api, ApiError } from '../api/client';
 
 export default function SwapPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [xafAmount, setXafAmount] = useState(0);
-  const [destinationAddress, setDestinationAddress] = useState('');
+  // "Use" on a saved address (from /orders) arrives as ?address=..., so a
+  // returning customer doesn't have to retype it.
+  const [destinationAddress, setDestinationAddress] = useState(() => searchParams.get('address') || '');
   const [bscConfirmed, setBscConfirmed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
@@ -20,6 +24,10 @@ export default function SwapPage() {
   const ticker = useMarketTicker();
   const preview = useQuotePreview({ xafAmount, destinationAddress });
   const data = preview.data;
+
+  if (ticker.status === 'ok' && ticker.isOpen === false) {
+    return <Navigate to="/closed" replace />;
+  }
 
   const addressTouched = destinationAddress.trim().length > 0;
   const chain = data?.chain ?? null;
@@ -54,6 +62,14 @@ export default function SwapPage() {
     setSubmitError(null);
     try {
       const result = await api.createOrder({ xafAmount, destinationAddress, bscConfirmed });
+      saveOrderToHistory({
+        reference: result.order.reference,
+        xafAmount: result.order.xafAmount,
+        chain: result.order.chain,
+        status: result.order.status,
+        createdAt: result.order.createdAt,
+      });
+      saveAddressToHistory({ chain: result.order.chain, address: result.order.destinationAddress });
       navigate(`/pay/${result.order.reference}`);
     } catch (err) {
       setSubmitError(err instanceof ApiError ? err.message : 'Something went wrong. Try again.');
