@@ -1,5 +1,8 @@
 const { decimalToBigInt } = require('../db/money');
+const { usdtDecimalsFor } = require('../config/chains');
 const { transitionOrder, OrderNotFoundError } = require('../orders/orderService');
+
+const STATS_DECIMALS = 6n;
 
 // What the operator queue shows by default: everything except the fully
 // resolved terminal states. AWAITING_PAYMENT/PAYMENT_CLAIMED aren't a
@@ -29,15 +32,26 @@ async function getTodayStats(prisma) {
 
   const completedToday = await prisma.order.findMany({
     where: { status: 'COMPLETED', updatedAt: { gte: startOfDay } },
-    select: { xafAmount: true, usdtAmount: true },
+    select: { xafAmount: true, usdtAmount: true, chain: true },
   });
 
-  const usdtSent = completedToday.reduce((sum, o) => sum + decimalToBigInt(o.usdtAmount), 0n);
+  // TRON USDT is 6dp, BSC USDT is 18dp — summing raw base units across
+  // chains mixes those scales (the same "trillionth of the intended
+  // amount" hazard CLAUDE.md warns about for payouts, here in a display
+  // rollup instead). Normalize every order to a common 6dp scale first.
+  const usdtSentMicros = completedToday.reduce((sum, o) => {
+    const decimals = BigInt(usdtDecimalsFor(o.chain));
+    const base = decimalToBigInt(o.usdtAmount);
+    const normalized = decimals >= STATS_DECIMALS
+      ? base / 10n ** (decimals - STATS_DECIMALS)
+      : base * 10n ** (STATS_DECIMALS - decimals);
+    return sum + normalized;
+  }, 0n);
 
   return {
     ordersSettled: completedToday.length,
     xafCollected: completedToday.reduce((sum, o) => sum + o.xafAmount, 0),
-    usdtSent: usdtSent.toString(),
+    usdtSentMicros: usdtSentMicros.toString(),
   };
 }
 
