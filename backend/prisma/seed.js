@@ -1,17 +1,7 @@
 require('dotenv').config();
 const { createPrismaClient } = require('../src/db/client');
 const { hashPassword } = require('../src/admin/password');
-
-// Parses a decimal string like "650.00" into micros (* 1e6) without ever
-// passing through a float — same representation as RateSnapshot/
-// PlatformSettings.xafUsdtRateMicros.
-function toMicros(decimalString) {
-  const [whole, fraction = ''] = String(decimalString).split('.');
-  if (fraction.length > 6) {
-    throw new Error(`${decimalString} has more than 6 decimal places`);
-  }
-  return BigInt(whole) * 1_000_000n + BigInt(fraction.padEnd(6, '0') || '0');
-}
+const { toMicros } = require('../src/pricing/micros');
 
 // Operators are provisioned here or by direct DB access — there is no
 // signup route, mirroring the customer side's "no accounts" ethos.
