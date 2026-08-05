@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../admin/AdminAuthContext';
 
 const navLinkClass = ({ isActive }) =>
@@ -18,15 +18,18 @@ export default function AdminLayout() {
       <div className="mx-auto flex w-full max-w-[720px] flex-col px-5">
         <div className="flex items-center justify-between gap-4 border-b border-rule py-5">
           <div className="flex items-center gap-6">
-            <div className="text-[15px] font-semibold">
+            <Link to="/admin/queue" className="text-[15px] font-semibold">
               Crypto<b className="font-semibold text-vault">XAF</b> admin
-            </div>
+            </Link>
             <nav className="flex items-center gap-5">
               <NavLink to="/admin/queue" className={navLinkClass}>
                 Queue
               </NavLink>
               <NavLink to="/admin/notify-requests" className={navLinkClass}>
                 Notify list
+              </NavLink>
+              <NavLink to="/admin/reviews" className={navLinkClass}>
+                Reviews
               </NavLink>
               <NavLink to="/admin/settings" className={navLinkClass}>
                 Settings

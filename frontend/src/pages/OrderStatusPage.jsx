@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import Masthead from '../components/Masthead';
 import CopyButton from '../components/CopyButton';
 import LedgerRow, { Perforation } from '../components/LedgerRow';
+import StarRating from '../components/StarRating';
 import { api, ApiError } from '../api/client';
 import { formatXaf, formatUsdtBaseUnits, headTail } from '../lib/format';
 import { USDT_DECIMALS, CHAIN_LABELS } from '../lib/chains';
@@ -190,6 +191,13 @@ export default function OrderStatusPage() {
         </div>
       )}
 
+      {stage === 'sent' && (
+        <ReviewPrompt
+          order={order}
+          onReviewed={() => setState((s) => ({ ...s, order: { ...s.order, hasReview: true } }))}
+        />
+      )}
+
       {stage === 'refund' && (
         <div className="my-5.5 rounded-[10px] border border-fault bg-fault-bg px-4.5 py-5">
           <div className="text-[17px] font-semibold text-fault">Refund on the way</div>
@@ -330,6 +338,66 @@ function Shell({ children }) {
     <div className="mx-auto flex min-h-screen w-full max-w-[430px] flex-col px-5 pb-7 text-ink">
       <Masthead />
       {children}
+    </div>
+  );
+}
+
+function ReviewPrompt({ order, onReviewed }) {
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+
+  if (order.hasReview) {
+    return (
+      <div className="border-b border-rule-soft py-5 text-[13px] text-muted">
+        Thanks — your review is pending approval.
+      </div>
+    );
+  }
+
+  async function handleSubmit() {
+    if (rating < 1) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      await api.submitReview(order.reference, { rating, comment: comment.trim() || undefined });
+      onReviewed();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not submit your review. Try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="border-b border-rule-soft py-5">
+      <div className="text-[15px] font-semibold text-ink">Rate your swap</div>
+      <p className="mt-1.5 text-[13px] text-muted">Your review is checked before it's shown to other customers.</p>
+
+      <div className="mt-3.5">
+        <StarRating value={rating} onChange={setRating} size="lg" />
+      </div>
+
+      <textarea
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+        placeholder="Optional — tell us how it went"
+        rows={2}
+        maxLength={500}
+        className="mt-3 w-full resize-y rounded-md border border-rule bg-card px-3 py-2.5 text-[13px] text-ink outline-none focus:border-vault"
+      />
+
+      {error && <div className="mt-2 text-xs text-fault">{error}</div>}
+
+      <button
+        type="button"
+        disabled={rating < 1 || submitting}
+        onClick={handleSubmit}
+        className="mt-3 rounded-md bg-vault px-5 py-2.5 text-sm font-semibold text-paper-2 disabled:bg-rule disabled:text-muted"
+      >
+        {submitting ? 'Submitting…' : 'Submit review'}
+      </button>
     </div>
   );
 }

@@ -94,6 +94,7 @@ model Order {
   refundReason       String?
 
   auditLogs OrderAuditLog[]
+  review    Review?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -171,6 +172,32 @@ model NotifyRequest {
   createdAt  DateTime  @default(now())
 
   @@index([createdAt])
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// A buyer's rating+comment on their own completed swap. One per order
+// (@unique on orderId — can't be gamed by re-reviewing), held as PENDING
+// until an operator approves or rejects it. No rating-based auto-filtering
+// — every review goes through the same human queue regardless of stars.
+model Review {
+  id      String       @id @default(uuid())
+  orderId String       @unique
+  order   Order        @relation(fields: [orderId], references: [id])
+  rating  Int
+  comment String?
+  status  ReviewStatus @default(PENDING)
+
+  createdAt   DateTime  @default(now())
+  moderatedAt DateTime?
+  // "operator:<operatorId>" — same actor format as OrderAuditLog/AdminAuditLog.
+  moderatedBy String?
+
+  @@index([status])
 }
 
 // Append-only security/audit trail for admin actions that aren't order

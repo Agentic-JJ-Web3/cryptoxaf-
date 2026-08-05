@@ -19,4 +19,24 @@ class PlatformClosedError extends Error {
   }
 }
 
-module.exports = { InvalidAmountError, BscConfirmationRequiredError, PlatformClosedError };
+class OrderNotReviewableError extends Error {
+  constructor() {
+    super('This order can only be reviewed once the swap is complete');
+    this.name = 'OrderNotReviewableError';
+  }
+}
+
+class ReviewAlreadyExistsError extends Error {
+  constructor() {
+    super('This order has already been reviewed');
+    this.name = 'ReviewAlreadyExistsError';
+  }
+}
+
+module.exports = {
+  InvalidAmountError,
+  BscConfirmationRequiredError,
+  PlatformClosedError,
+  OrderNotReviewableError,
+  ReviewAlreadyExistsError,
+};

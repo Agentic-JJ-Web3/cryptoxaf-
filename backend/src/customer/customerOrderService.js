@@ -44,6 +44,9 @@ function serializeOrder(order) {
     payoutTxHash: order.payoutTxHash,
     explorerTxUrl,
     refundReason: order.refundReason,
+    // Whether the review prompt should show on the status page — never the
+    // review's own content, this endpoint has no reason to expose that.
+    hasReview: order.review != null,
     quoteExpiresAt: order.quoteExpiresAt,
     createdAt: order.createdAt,
     updatedAt: order.updatedAt,
@@ -256,7 +259,7 @@ async function getOrderStatus(prisma, reference) {
 
   const current = await prisma.order.findUniqueOrThrow({
     where: { id: order.id },
-    include: { rateSnapshot: true },
+    include: { rateSnapshot: true, review: true },
   });
 
   return {

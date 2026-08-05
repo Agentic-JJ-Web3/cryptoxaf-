@@ -41,6 +41,10 @@ export const api = {
       body: JSON.stringify(data),
     }),
   notify: (phone) => request('/api/notify', { method: 'POST', body: JSON.stringify({ phone }) }),
+  submitReview: (reference, data) =>
+    request(`/api/orders/${encodeURIComponent(reference)}/review`, { method: 'POST', body: JSON.stringify(data) }),
+  getReviews: () => request('/api/reviews'),
+  getActivity: () => request('/api/activity'),
 };
 
 export const adminApi = {
@@ -71,6 +75,9 @@ export const adminApi = {
   updateSettings: (data) => request('/api/admin/settings', { method: 'PUT', body: JSON.stringify(data) }),
   listNotifyRequests: () => request('/api/admin/notify-requests'),
   markNotified: (id) => request(`/api/admin/notify-requests/${encodeURIComponent(id)}/mark-notified`, { method: 'POST' }),
+  listReviews: (status) => request(`/api/admin/reviews${status ? `?status=${encodeURIComponent(status)}` : ''}`),
+  approveReview: (id) => request(`/api/admin/reviews/${encodeURIComponent(id)}/approve`, { method: 'POST' }),
+  rejectReview: (id) => request(`/api/admin/reviews/${encodeURIComponent(id)}/reject`, { method: 'POST' }),
 };
 
 export { ApiError };

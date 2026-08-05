@@ -6,6 +6,7 @@ import AdminQueuePage from '../pages/admin/AdminQueuePage';
 import AdminOrderDetailPage from '../pages/admin/AdminOrderDetailPage';
 import AdminSettingsPage from '../pages/admin/AdminSettingsPage';
 import AdminNotifyPage from '../pages/admin/AdminNotifyPage';
+import AdminReviewsPage from '../pages/admin/AdminReviewsPage';
 
 export default function AdminApp() {
   return (
@@ -22,6 +23,7 @@ export default function AdminApp() {
           <Route path="queue" element={<AdminQueuePage />} />
           <Route path="orders/:reference" element={<AdminOrderDetailPage />} />
           <Route path="notify-requests" element={<AdminNotifyPage />} />
+          <Route path="reviews" element={<AdminReviewsPage />} />
           <Route path="settings" element={<AdminSettingsPage />} />
           <Route index element={<Navigate to="queue" replace />} />
         </Route>

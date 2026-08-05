@@ -71,6 +71,26 @@ QUOTED → AWAITING_PAYMENT → PAYMENT_CLAIMED → PAYMENT_VERIFIED → COMPLET
 
 ---
 
+## Reviews
+
+A buyer can rate+comment on their own **completed** swap, once — the review sits `PENDING` until an operator approves or rejects it from the admin queue. Nothing reaches the public list without a human in the loop.
+
+**No rating-based auto-filtering.** A 1★ review goes through the exact same `PENDING → APPROVED/REJECTED` queue as a 5★ one. Silently hiding low ratings while claiming to show "reviews" is a dishonesty pattern — it's the same trust the pricing rules protect, applied to social proof instead of a rate.
+
+**One review per order.** Enforced by a database constraint, not just a service-layer check — reviewing is tied to the reference the customer already holds (the same bearer-token trust model as order status/claim-payment), not a login.
+
+**The public review list never includes the order reference.** It's a bearer token for that stranger's order lookup (see Security) — leaking it through an unrelated public endpoint defeats the point of it being one.
+
+---
+
+## Live activity ticker
+
+The landing page's "recent activity" strip is **real, anonymized `COMPLETED` orders only.** The amount is bucketed (rounded to the nearest 5,000 XAF) so a line can never be matched back to one specific order's exact figure; nothing identifying — reference, address, MoMo number — is ever included.
+
+**Never fabricated.** No placeholder names, no seeded/looping fake entries to make the platform look busier than it is. When there's no recent activity, the ticker **renders nothing** — not a loading skeleton, not an empty shell pretending there's data. Same principle as the copy rule below: no urgency the product hasn't earned.
+
+---
+
 ## Provider abstraction
 
 Both sides of the transaction sit behind an interface so automation is a swap, not a rewrite.
@@ -151,6 +171,8 @@ Live mint appears only when something is genuinely live or genuinely finished. U
 
 **Mobile-first at 360px**, not 390. Tecno, Infinix and itel dominate this market. Then 430, 768, 1024. Dark mode is required, not optional — this is read at night on a phone.
 
+**Motion and glow effects are hand-rolled in plain CSS/Tailwind, not a library.** The look draws on reactbits.dev (cursor-spotlight card glow, marquee scroll, gradient-blob backgrounds, scroll-reveal) but its heavier pieces — Aurora, Particles — pull in `three.js` + `@react-three/fiber`, a poor fit for the 360px-budget-Android target above. Reuse `frontend/src/components/effects/` (`SpotlightCard`, `Marquee`, `RevealOnScroll`, `GradientBlobs`) rather than reaching for an animation dependency; don't `npm install` one for "just this effect."
+
 ---
 
 ## UI copy
@@ -177,11 +199,13 @@ Never promise speed the system can't control. Settlement is manual. The UI says 
 
 ## Build order
 
-1. Prisma schema and the order state machine with its guards and transitions
-2. Admin queue and admin order detail — nothing can be settled without these
-3. Swap screen, payment instructions, order status
-4. How it works, closed state, device-local order history
-5. Admin settings
+1. Prisma schema and the order state machine with its guards and transitions — done
+2. Admin queue and admin order detail — nothing can be settled without these — done
+3. Swap screen, payment instructions, order status — done
+4. How it works, closed state, device-local order history — done
+5. Admin settings — done
+
+All five are built. Since then, additively: reviews + admin moderation, the live activity ticker, an admin "notify me" queue, and a landing page redesign (desktop layout, mobile app-shell nav).
 
 Automated payout and the sell flow are explicitly out of scope until asked.
 

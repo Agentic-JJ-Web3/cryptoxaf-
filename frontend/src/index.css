@@ -120,4 +120,26 @@ button {
   .animate-dotwave {
     animation: dotwave 1.2s infinite;
   }
+
+  @keyframes marquee-scroll {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  .marquee-track {
+    animation: marquee-scroll var(--marquee-duration, 28s) linear infinite;
+  }
+  .marquee-mask:hover .marquee-track,
+  .marquee-mask:focus-within .marquee-track {
+    animation-play-state: paused;
+  }
+}
+/* Reduced motion: the mask still hides the doubled copy without the
+   forever-scroll keyframe running at all. */
+.marquee-mask {
+  -webkit-mask-image: linear-gradient(to right, transparent, black 24px, black calc(100% - 24px), transparent);
+  mask-image: linear-gradient(to right, transparent, black 24px, black calc(100% - 24px), transparent);
 }
