@@ -8,6 +8,7 @@ const { createLoginRateLimit } = require('./admin/middleware/rateLimit');
 const { createAuthRouter } = require('./admin/routes/auth');
 const { createOrdersRouter: createAdminOrdersRouter } = require('./admin/routes/orders');
 const { createSettingsRouter: createAdminSettingsRouter } = require('./admin/routes/settings');
+const { createNotifyRequestsRouter: createAdminNotifyRequestsRouter } = require('./admin/routes/notify');
 const { createQuotesRouter } = require('./customer/routes/quotes');
 const { createOrdersRouter: createCustomerOrdersRouter } = require('./customer/routes/orders');
 const { createNotifyRouter } = require('./customer/routes/notify');
@@ -45,6 +46,7 @@ function createApp({ prisma, jwtSecret, isProduction = false, corsOrigin }) {
   );
   app.use('/api/admin/orders', createAdminOrdersRouter({ prisma, requireAuth }));
   app.use('/api/admin/settings', createAdminSettingsRouter({ prisma, requireAuth }));
+  app.use('/api/admin/notify-requests', createAdminNotifyRequestsRouter({ prisma, requireAuth }));
 
   app.use('/api/quotes', createQuotesRouter({ prisma }));
   app.use('/api/orders', createCustomerOrdersRouter({ prisma }));

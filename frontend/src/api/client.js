@@ -69,6 +69,8 @@ export const adminApi = {
     }),
   getSettings: () => request('/api/admin/settings'),
   updateSettings: (data) => request('/api/admin/settings', { method: 'PUT', body: JSON.stringify(data) }),
+  listNotifyRequests: () => request('/api/admin/notify-requests'),
+  markNotified: (id) => request(`/api/admin/notify-requests/${encodeURIComponent(id)}/mark-notified`, { method: 'POST' }),
 };
 
 export { ApiError };

@@ -25,6 +25,9 @@ export default function AdminLayout() {
               <NavLink to="/admin/queue" className={navLinkClass}>
                 Queue
               </NavLink>
+              <NavLink to="/admin/notify-requests" className={navLinkClass}>
+                Notify list
+              </NavLink>
               <NavLink to="/admin/settings" className={navLinkClass}>
                 Settings
               </NavLink>
