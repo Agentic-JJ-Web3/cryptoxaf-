@@ -60,7 +60,8 @@ export default function AdminReviewsPage() {
               <div>
                 <StarRating value={review.rating} />
                 <div className="mt-1 font-mono text-xs text-muted">
-                  {review.orderReference} · {CHAIN_LABELS[review.chain]}
+                  {review.orderReference} · {CHAIN_LABELS[review.chain]} ·{' '}
+                  {new Date(review.createdAt).toLocaleDateString([], { dateStyle: 'medium' })}
                 </div>
               </div>
               <div className="flex flex-none gap-2">

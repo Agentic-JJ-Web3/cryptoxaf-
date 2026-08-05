@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import ChainFeeCard from '../components/ChainFeeCard';
 import LedgerRow, { Perforation } from '../components/LedgerRow';
 import MobileNavSheet from '../components/MobileNavSheet';
+import ThemeToggle from '../components/ThemeToggle';
 import ActivityTicker from '../components/ActivityTicker';
 import TestimonialCard from '../components/TestimonialCard';
 import SpotlightCard from '../components/effects/SpotlightCard';
@@ -73,16 +74,19 @@ function Header({ onOpenMenu }) {
         </Link>
       </nav>
 
-      <button
-        type="button"
-        onClick={onOpenMenu}
-        aria-label="Open menu"
-        className="flex h-9 w-9 flex-none items-center justify-center rounded-md border border-rule text-ink md:hidden"
-      >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-        </svg>
-      </button>
+      <div className="flex flex-none items-center gap-2.5">
+        <ThemeToggle />
+        <button
+          type="button"
+          onClick={onOpenMenu}
+          aria-label="Open menu"
+          className="flex h-9 w-9 flex-none items-center justify-center rounded-md border border-rule text-ink md:hidden"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        </button>
+      </div>
     </div>
   );
 }

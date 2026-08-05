@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import Masthead from '../components/Masthead';
+import BackButton from '../components/BackButton';
 import CopyButton from '../components/CopyButton';
 import { api, ApiError } from '../api/client';
 import { formatXaf, formatCountdown } from '../lib/format';
@@ -225,6 +226,9 @@ function Shell({ children }) {
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-[430px] flex-col px-5 pb-7 text-ink">
       <Masthead />
+      <div className="pt-4">
+        <BackButton fallback="/swap" />
+      </div>
       {children}
     </div>
   );

@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
+import ThemeToggle from './ThemeToggle';
 
 export default function Masthead() {
   return (
-    <div className="border-b border-rule pb-5 pt-6">
+    <div className="flex items-center justify-between gap-3 border-b border-rule pb-5 pt-6">
       <Link to="/" className="flex w-fit items-center gap-2.5">
         <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true">
           <rect x="2" y="2" width="28" height="28" rx="7" fill="var(--vault)" />
@@ -15,6 +16,7 @@ export default function Masthead() {
           Crypto<b className="font-semibold">XAF</b>
         </div>
       </Link>
+      <ThemeToggle />
     </div>
   );
 }

@@ -6,9 +6,26 @@
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" content="#EDEFEA" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0B1512" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#EDEFEA" id="theme-color-meta" />
     <meta name="description" content="Swap XAF and USDT over Mobile Money." />
+    <script>
+      // Applies a saved manual theme choice before first paint, so there's
+      // no flash of the wrong theme while React boots. No stored choice
+      // means "follow the system setting" — index.css's own media query
+      // already handles that case, this script does nothing.
+      (function () {
+        try {
+          var stored = localStorage.getItem('cryptoxaf-theme');
+          if (stored === 'light' || stored === 'dark') {
+            document.documentElement.setAttribute('data-theme', stored);
+            document.getElementById('theme-color-meta').setAttribute('content', stored === 'dark' ? '#0B1512' : '#EDEFEA');
+          }
+        } catch (e) {
+          // localStorage can throw in locked-down contexts — falling back
+          // to the system theme is a fine degradation, not worth surfacing.
+        }
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

@@ -1,5 +1,6 @@
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../admin/AdminAuthContext';
+import ThemeToggle from './ThemeToggle';
 
 const navLinkClass = ({ isActive }) =>
   `text-sm font-medium ${isActive ? 'text-ink' : 'text-muted hover:text-ink-2'}`;
@@ -37,6 +38,7 @@ export default function AdminLayout() {
             </nav>
           </div>
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             <span className="hidden text-xs text-muted sm:inline">{operator?.email}</span>
             <button
               type="button"

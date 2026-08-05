@@ -19,8 +19,14 @@
   --muted: #5f6d65;
 }
 
+/* Manual override (ThemeToggle) always wins over the system setting below —
+   `:not([data-theme="light"])` so an explicit "dark" choice doesn't get
+   double-applied, and an explicit "light" choice on a dark-system device
+   isn't clobbered back to dark. No stored choice at all (no data-theme
+   attribute) falls through to following the system setting, same as
+   before this toggle existed. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
     --ink: #eaeee9;
     --ink-2: #b9c4bc;
     --vault: #3fd08f;
@@ -37,6 +43,24 @@
     --fault-bg: #2a1512;
     --muted: #8a968e;
   }
+}
+
+:root[data-theme='dark'] {
+  --ink: #eaeee9;
+  --ink-2: #b9c4bc;
+  --vault: #3fd08f;
+  --vault-deep: #2aa972;
+  --live: #3fd08f;
+  --paper: #0b1512;
+  --paper-2: #111c18;
+  --card: #141f1a;
+  --rule: #2a3a33;
+  --rule-soft: #1e2c26;
+  --fee: #d9a441;
+  --fee-bg: #241d0f;
+  --fault: #e0796b;
+  --fault-bg: #2a1512;
+  --muted: #8a968e;
 }
 
 @theme {

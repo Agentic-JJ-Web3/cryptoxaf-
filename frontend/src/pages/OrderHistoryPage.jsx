@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import Masthead from '../components/Masthead';
+import BackButton from '../components/BackButton';
 import { api } from '../api/client';
 import { formatXaf, headTail } from '../lib/format';
 import { CHAIN_LABELS } from '../lib/chains';
@@ -69,6 +70,10 @@ export default function OrderHistoryPage() {
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-[430px] flex-col px-5 pb-10 text-ink">
       <Masthead />
+
+      <div className="pt-4">
+        <BackButton />
+      </div>
 
       <div className="border-b border-rule-soft py-4">
         <h1 className="text-[19px] font-semibold text-ink">Order history</h1>

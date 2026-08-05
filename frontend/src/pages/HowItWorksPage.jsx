@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import Masthead from '../components/Masthead';
+import BackButton from '../components/BackButton';
 import LedgerRow, { Perforation } from '../components/LedgerRow';
 import { useMarketTicker } from '../lib/useMarketTicker';
 import { formatXaf } from '../lib/format';
@@ -35,6 +36,10 @@ export default function HowItWorksPage() {
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-[430px] flex-col px-5 pb-10 text-ink">
       <Masthead />
+
+      <div className="pt-4">
+        <BackButton />
+      </div>
 
       <div className="pb-1.5 pt-5">
         <h1 className="text-xl font-semibold tracking-tight text-ink">How it works</h1>

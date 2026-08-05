@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Masthead from '../components/Masthead';
+import BackButton from '../components/BackButton';
 import LedgerRow from '../components/LedgerRow';
 import { useMarketTicker } from '../lib/useMarketTicker';
 import { formatXaf } from '../lib/format';
@@ -42,6 +43,10 @@ export default function ClosedPage() {
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-[430px] flex-col px-5 pb-10 text-ink">
       <Masthead />
+
+      <div className="pt-4">
+        <BackButton />
+      </div>
 
       {/* STATUS */}
       <div className="border-b border-rule-soft py-6.5">
