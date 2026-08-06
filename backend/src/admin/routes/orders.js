@@ -3,7 +3,7 @@ const { z } = require('zod');
 const orderAdminService = require('../orderAdminService');
 
 const rejectSchema = z.object({ reason: z.string().trim().min(1, 'reason is required') });
-const completeSchema = z.object({ payoutTxHash: z.string().trim().min(1, 'payoutTxHash is required') });
+const completeSchema = z.object({ payoutReference: z.string().trim().min(1, 'payoutReference is required') });
 const refundSchema = z.object({ note: z.string().trim().optional() });
 
 function serializeForResponse(order) {
@@ -66,11 +66,11 @@ function createOrdersRouter({ prisma, requireAuth }) {
 
   router.post('/:reference/complete', async (req, res, next) => {
     try {
-      const { payoutTxHash } = completeSchema.parse(req.body);
+      const { payoutReference } = completeSchema.parse(req.body);
       const order = await orderAdminService.completeOrder(prisma, {
         reference: req.params.reference,
         operator: req.operator,
-        payoutTxHash,
+        payoutReference,
       });
       res.json({ order: serializeForResponse(order) });
     } catch (err) {
