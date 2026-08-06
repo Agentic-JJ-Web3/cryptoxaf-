@@ -61,10 +61,10 @@ export const adminApi = {
       method: 'POST',
       body: JSON.stringify({ reason }),
     }),
-  completeOrder: (reference, payoutTxHash) =>
+  completeOrder: (reference, payoutReference) =>
     request(`/api/admin/orders/${encodeURIComponent(reference)}/complete`, {
       method: 'POST',
-      body: JSON.stringify({ payoutTxHash }),
+      body: JSON.stringify({ payoutReference }),
     }),
   refundOrder: (reference, note) =>
     request(`/api/admin/orders/${encodeURIComponent(reference)}/refund`, {
