@@ -20,10 +20,21 @@ enum OrderStatus {
   AWAITING_PAYMENT
   PAYMENT_CLAIMED
   PAYMENT_VERIFIED
+  // Sell (USDT -> XAF) only, structurally parallel to the three above —
+  // see CLAUDE.md "Sell flow". Reusing PAYMENT_CLAIMED etc. for a crypto
+  // deposit would mislead an operator reading the queue.
+  AWAITING_DEPOSIT
+  DEPOSIT_CLAIMED
+  DEPOSIT_VERIFIED
   COMPLETED
   EXPIRED
   REFUND_DUE
   REFUNDED
+}
+
+enum OrderDirection {
+  BUY
+  SELL
 }
 
 enum ActorType {
@@ -61,12 +72,18 @@ model RateSnapshot {
 // machine and can never leave a terminal state — both enforced by a
 // trigger installed in the migration, not by application code alone.
 model Order {
-  id        String      @id @default(uuid())
+  id        String         @id @default(uuid())
   // Bearer token for order lookup; never log unmasked (see CLAUDE.md Security).
-  reference String      @unique
-  status    OrderStatus @default(QUOTED)
+  reference String         @unique
+  status    OrderStatus    @default(QUOTED)
+  direction OrderDirection @default(BUY)
   chain     Chain
 
+  // Buy: the customer's destination wallet (payout target). Sell: the
+  // customer's own wallet, collected only as a refund-safety-net address
+  // if a deposit is ever rejected — never a payout target for sell. See
+  // CLAUDE.md "Sell flow" for why chain is customer-selected, not detected,
+  // on the sell side.
   destinationAddress String
 
   // What the customer types and what leaves their MoMo. No minor unit in XAF.
@@ -83,13 +100,24 @@ model Order {
 
   quoteExpiresAt DateTime
 
-  // Customer-submitted MoMo transaction id (PAYMENT_CLAIMED).
+  // Buy: customer-submitted MoMo transaction id (PAYMENT_CLAIMED). Sell:
+  // customer-submitted on-chain deposit tx hash (DEPOSIT_CLAIMED) — at
+  // least one of this or depositReceiptImagePath is required to claim.
   paymentReference   String?
-  // Customer's MoMo number, submitted alongside paymentReference so the
-  // operator can cross-check it in their own MoMo app. Never log unmasked.
-  customerMomoNumber String?
-  // On-chain payout hash, recorded together with the COMPLETED transition.
-  payoutTxHash       String? @unique
+  // Sell only, alternative to paymentReference when claiming a deposit —
+  // a UUID-named path under backend/uploads/receipts/, never the order
+  // reference. Served only via an authenticated admin route.
+  depositReceiptImagePath String?
+  // Customer's MoMo number: buy — optional, submitted alongside
+  // paymentReference so the operator can cross-check it in their own MoMo
+  // app. Sell — required at creation, this is where the payout goes.
+  // Never log unmasked.
+  customerMomoNumber  String?
+  customerMomoNetwork MomoNetwork?
+  // Buy: on-chain payout tx hash. Sell: MoMo payout confirmation code (not
+  // a tx hash — hence the direction-neutral name). Recorded together with
+  // the COMPLETED transition either way.
+  payoutReference     String? @unique
   // Why an order was sent to REFUND_DUE.
   refundReason       String?
 
@@ -157,6 +185,13 @@ model PlatformSettings {
   // The name registered on momoNumber, shown alongside it so the customer
   // can confirm it matches what their MoMo app shows before paying.
   momoAccountName   String
+  // Sell (USDT -> XAF) side — all null until an operator deliberately turns
+  // sell on via admin settings. rateProvider.getSellRate fails closed
+  // (RateUnavailableError) while sellMarginBps or the relevant deposit
+  // address is unset, same posture as the rest of this row.
+  sellMarginBps          Int?
+  sellDepositAddressTron String?
+  sellDepositAddressBsc  String?
   updatedAt         DateTime    @updatedAt
   updatedBy         String?
 }
