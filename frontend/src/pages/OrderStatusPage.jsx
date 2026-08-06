@@ -180,7 +180,7 @@ export default function OrderStatusPage() {
                 style={{ background: 'rgba(255,255,255,.35)', color: '#0E1A16' }}
               >
                 <span className="break-all">
-                  {order.payoutTxHash.slice(0, 14)}…{order.payoutTxHash.slice(-10)}
+                  {order.payoutReference.slice(0, 14)}…{order.payoutReference.slice(-10)}
                 </span>
                 <span className="flex-none text-xs font-semibold">
                   View on {order.chain === 'TRON' ? 'Tronscan' : 'BscScan'} →

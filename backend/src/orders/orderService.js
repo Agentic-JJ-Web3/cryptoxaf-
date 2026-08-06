@@ -60,7 +60,7 @@ async function createOrder(prisma, { reference, chain, destinationAddress, xafAm
 // same order serialize instead of racing a read-modify-write. The second
 // caller reads the *post-commit* status of the first and is rejected by
 // the same guard the first was checked against — no double-completion,
-// no lost update. `data` carries transition-specific fields (payoutTxHash,
+// no lost update. `data` carries transition-specific fields (payoutReference,
 // paymentReference, refundReason, ...).
 async function transitionOrder(prisma, { orderId, toStatus, actorType, actor, note, data = {} }) {
   return prisma.$transaction(async (tx) => {
