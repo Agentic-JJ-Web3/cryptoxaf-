@@ -31,17 +31,27 @@ function serializeRate(rate) {
 }
 
 function serializeOrder(order) {
-  const explorerTxUrl = order.payoutTxHash ? CHAINS[order.chain].explorerTxUrl(order.payoutTxHash) : null;
+  // Buy's payoutReference is a real on-chain hash — link to it. Sell's is a
+  // MoMo payout confirmation code, never a tx hash, so there's no explorer
+  // link to build.
+  const explorerTxUrl =
+    order.direction === 'BUY' && order.payoutReference
+      ? CHAINS[order.chain].explorerTxUrl(order.payoutReference)
+      : null;
 
   return {
     reference: order.reference,
     status: order.status,
+    direction: order.direction,
     chain: order.chain,
     destinationAddress: order.destinationAddress,
     xafAmount: order.xafAmount,
     usdtAmount: order.usdtAmount.toString(),
     paymentReference: order.paymentReference,
-    payoutTxHash: order.payoutTxHash,
+    depositReceiptImagePath: order.depositReceiptImagePath ? true : false,
+    customerMomoNumber: order.customerMomoNumber,
+    customerMomoNetwork: order.customerMomoNetwork,
+    payoutReference: order.payoutReference,
     explorerTxUrl,
     refundReason: order.refundReason,
     // Whether the review prompt should show on the status page — never the
