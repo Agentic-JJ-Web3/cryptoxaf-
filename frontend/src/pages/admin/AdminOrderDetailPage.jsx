@@ -131,7 +131,7 @@ function StagePanel({ order, onChanged }) {
       return (
         <Panel title="Sent · record closed" titleColor="var(--live)">
           <div className="break-all rounded-lg border border-rule bg-card px-3.5 py-3 font-mono text-[13px] text-ink-2">
-            {order.payoutTxHash}
+            {order.payoutReference}
           </div>
         </Panel>
       );
