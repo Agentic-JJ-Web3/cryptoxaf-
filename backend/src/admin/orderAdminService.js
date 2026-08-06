@@ -118,7 +118,7 @@ async function rejectPayment(prisma, { reference, operator, reason }) {
   });
 }
 
-async function completeOrder(prisma, { reference, operator, payoutTxHash }) {
+async function completeOrder(prisma, { reference, operator, payoutReference }) {
   const order = await findByReference(prisma, reference);
   return transitionOrder(prisma, {
     orderId: order.id,
@@ -126,7 +126,7 @@ async function completeOrder(prisma, { reference, operator, payoutTxHash }) {
     actorType: 'OPERATOR',
     actor: `operator:${operator.id}`,
     note: 'USDT sent',
-    data: { payoutTxHash },
+    data: { payoutReference },
   });
 }
 
