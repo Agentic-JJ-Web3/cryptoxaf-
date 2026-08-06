@@ -82,7 +82,7 @@ async function createOrderAt(status, overrides = {}) {
         ...(toStatus === 'PAYMENT_CLAIMED'
           ? { paymentReference: 'MP-FIXTURE-TX', customerMomoNumber: '+237600000000' }
           : {}),
-        ...(toStatus === 'COMPLETED' ? { payoutTxHash: `0xhash-${order.id}` } : {}),
+        ...(toStatus === 'COMPLETED' ? { payoutReference: `0xhash-${order.id}` } : {}),
       },
     });
   }

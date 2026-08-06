@@ -140,7 +140,7 @@ describe('settlement actions', () => {
     expect(res.body.order.refundReason).toBe('transaction ID does not match any payment received');
   });
 
-  test('complete requires a payoutTxHash and moves order to COMPLETED', async () => {
+  test('complete requires a payoutReference and moves order to COMPLETED', async () => {
     const app = buildTestApp();
     const { agent } = await loginAgent(app);
     const order = await createOrderAt('PAYMENT_VERIFIED');
@@ -150,14 +150,14 @@ describe('settlement actions', () => {
 
     const res = await agent
       .post(`/api/admin/orders/${order.reference}/complete`)
-      .send({ payoutTxHash: '0xabc123' });
+      .send({ payoutReference: '0xabc123' });
 
     expect(res.status).toBe(200);
     expect(res.body.order.status).toBe('COMPLETED');
-    expect(res.body.order.payoutTxHash).toBe('0xabc123');
+    expect(res.body.order.payoutReference).toBe('0xabc123');
 
     // Terminal: a second completion attempt must fail, even via the route.
-    const second = await agent.post(`/api/admin/orders/${order.reference}/complete`).send({ payoutTxHash: '0xdef456' });
+    const second = await agent.post(`/api/admin/orders/${order.reference}/complete`).send({ payoutReference: '0xdef456' });
     expect(second.status).toBe(409);
   });
 

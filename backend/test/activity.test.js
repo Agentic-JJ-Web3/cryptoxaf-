@@ -51,7 +51,7 @@ describe('GET /api/activity', () => {
       actorType: 'OPERATOR',
       actor: 'operator:fixture',
       note: 'USDT sent',
-      data: { payoutTxHash: `0xold-${order.id}`, updatedAt: new Date(Date.now() - 25 * 60 * 60 * 1000) },
+      data: { payoutReference: `0xold-${order.id}`, updatedAt: new Date(Date.now() - 25 * 60 * 60 * 1000) },
     });
 
     const res = await request(app).get('/api/activity');

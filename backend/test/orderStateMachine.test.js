@@ -47,7 +47,7 @@ describe('legal transitions', () => {
 
     const final = await prisma.order.findUniqueOrThrow({ where: { id: order.id } });
     expect(final.status).toBe('COMPLETED');
-    expect(final.payoutTxHash).toBe(`0xhash-${order.id}`);
+    expect(final.payoutReference).toBe(`0xhash-${order.id}`);
 
     const logs = await prisma.orderAuditLog.findMany({
       where: { orderId: order.id },
@@ -119,7 +119,7 @@ describe('terminal states are unreachable a second time', () => {
       toStatus: 'COMPLETED',
       actorType: 'OPERATOR',
       actor: 'operator:1',
-      data: { payoutTxHash: '0xfirst' },
+      data: { payoutReference: '0xfirst' },
     });
     expect(first.status).toBe('COMPLETED');
 
@@ -129,12 +129,12 @@ describe('terminal states are unreachable a second time', () => {
         toStatus: 'COMPLETED',
         actorType: 'OPERATOR',
         actor: 'operator:2',
-        data: { payoutTxHash: '0xsecond' },
+        data: { payoutReference: '0xsecond' },
       }),
     ).rejects.toThrow(IllegalTransitionError);
 
     const final = await prisma.order.findUniqueOrThrow({ where: { id: order.id } });
-    expect(final.payoutTxHash).toBe('0xfirst');
+    expect(final.payoutReference).toBe('0xfirst');
 
     const completedLogs = await prisma.orderAuditLog.findMany({
       where: { orderId: order.id, toStatus: 'COMPLETED' },
@@ -145,13 +145,13 @@ describe('terminal states are unreachable a second time', () => {
   test('double-completion: two concurrent double-tap requests race for the same order — exactly one wins', async () => {
     const order = await createAt('PAYMENT_VERIFIED');
 
-    const attempt = (actor, payoutTxHash) =>
+    const attempt = (actor, payoutReference) =>
       transitionOrder(prisma, {
         orderId: order.id,
         toStatus: 'COMPLETED',
         actorType: 'OPERATOR',
         actor,
-        data: { payoutTxHash },
+        data: { payoutReference },
       });
 
     const results = await Promise.allSettled([
@@ -167,7 +167,7 @@ describe('terminal states are unreachable a second time', () => {
 
     const final = await prisma.order.findUniqueOrThrow({ where: { id: order.id } });
     expect(final.status).toBe('COMPLETED');
-    expect(['0xconcurrent-a', '0xconcurrent-b']).toContain(final.payoutTxHash);
+    expect(['0xconcurrent-a', '0xconcurrent-b']).toContain(final.payoutReference);
 
     const completedLogs = await prisma.orderAuditLog.findMany({
       where: { orderId: order.id, toStatus: 'COMPLETED' },
