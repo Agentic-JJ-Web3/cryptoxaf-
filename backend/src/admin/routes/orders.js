@@ -1,6 +1,8 @@
+const path = require('path');
 const express = require('express');
 const { z } = require('zod');
 const orderAdminService = require('../orderAdminService');
+const { RECEIPTS_DIR } = require('../../uploads/receiptUpload');
 
 const rejectSchema = z.object({ reason: z.string().trim().min(1, 'reason is required') });
 const completeSchema = z.object({ payoutReference: z.string().trim().min(1, 'payoutReference is required') });
@@ -73,6 +75,73 @@ function createOrdersRouter({ prisma, requireAuth }) {
         payoutReference,
       });
       res.json({ order: serializeForResponse(order) });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // Read-only — never transitions the order, just runs the on-chain lookup
+  // and returns what it found for the operator to review.
+  router.post('/:reference/check-deposit', async (req, res, next) => {
+    try {
+      const result = await orderAdminService.checkDeposit(prisma, { reference: req.params.reference });
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.post('/:reference/verify-deposit', async (req, res, next) => {
+    try {
+      const order = await orderAdminService.verifySellDeposit(prisma, {
+        reference: req.params.reference,
+        operator: req.operator,
+      });
+      res.json({ order: serializeForResponse(order) });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.post('/:reference/reject-deposit', async (req, res, next) => {
+    try {
+      const { reason } = rejectSchema.parse(req.body);
+      const order = await orderAdminService.rejectDeposit(prisma, {
+        reference: req.params.reference,
+        operator: req.operator,
+        reason,
+      });
+      res.json({ order: serializeForResponse(order) });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.post('/:reference/complete-sell', async (req, res, next) => {
+    try {
+      const { payoutReference } = completeSchema.parse(req.body);
+      const order = await orderAdminService.completeSellOrder(prisma, {
+        reference: req.params.reference,
+        operator: req.operator,
+        payoutReference,
+      });
+      res.json({ order: serializeForResponse(order) });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // The only path a receipt screenshot is ever served through — never a
+  // public static mount. path.basename strips any directory components a
+  // stored value could theoretically contain, so this can never escape
+  // RECEIPTS_DIR regardless of what's in the database.
+  router.get('/:reference/receipt', async (req, res, next) => {
+    try {
+      const order = await orderAdminService.getOrderDetail(prisma, req.params.reference);
+      if (!order || !order.depositReceiptImagePath) {
+        return res.status(404).json({ error: 'No receipt for this order' });
+      }
+      res.sendFile(path.join(RECEIPTS_DIR, path.basename(order.depositReceiptImagePath)));
     } catch (err) {
       next(err);
     }
