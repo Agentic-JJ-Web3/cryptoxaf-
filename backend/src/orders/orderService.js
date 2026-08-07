@@ -24,7 +24,21 @@ class IllegalTransitionError extends Error {
 // Creates the RateSnapshot and the Order it prices in one transaction, plus
 // the audit log entry for the initial QUOTED state, so an order can never
 // exist without the pricing inputs it was quoted from.
-async function createOrder(prisma, { reference, chain, destinationAddress, xafAmount, usdtAmount, quoteExpiresAt, rateSnapshot }) {
+async function createOrder(
+  prisma,
+  {
+    reference,
+    chain,
+    direction = 'BUY',
+    destinationAddress,
+    xafAmount,
+    usdtAmount,
+    quoteExpiresAt,
+    rateSnapshot,
+    customerMomoNumber,
+    customerMomoNetwork,
+  },
+) {
   return prisma.$transaction(async (tx) => {
     const snapshot = await tx.rateSnapshot.create({ data: rateSnapshot });
 
@@ -32,11 +46,14 @@ async function createOrder(prisma, { reference, chain, destinationAddress, xafAm
       data: {
         reference,
         chain,
+        direction,
         destinationAddress,
         xafAmount,
         usdtAmount: usdtAmount.toString(),
         quoteExpiresAt,
         rateSnapshotId: snapshot.id,
+        customerMomoNumber,
+        customerMomoNetwork,
       },
     });
 
