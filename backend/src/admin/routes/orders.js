@@ -12,6 +12,14 @@ function serializeForResponse(order) {
   return { ...order, usdtAmount: order.usdtAmount.toString() };
 }
 
+// Ignores an unparseable date rather than erroring — this only filters a
+// history view, not a financial write path.
+function parseDateOrUndefined(value) {
+  if (!value) return undefined;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? undefined : date;
+}
+
 function createOrdersRouter({ prisma, requireAuth }) {
   const router = express.Router();
   router.use(requireAuth);
@@ -21,6 +29,25 @@ function createOrdersRouter({ prisma, requireAuth }) {
       const result = await orderAdminService.listQueue(prisma, {
         limit: req.query.limit ? Number(req.query.limit) : undefined,
         offset: req.query.offset ? Number(req.query.offset) : undefined,
+      });
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // Must be registered before /:reference — otherwise Express would match
+  // "history" itself as a reference param and this route would never fire.
+  router.get('/history', async (req, res, next) => {
+    try {
+      const { direction, status, dateFrom, dateTo, limit, offset } = req.query;
+      const result = await orderAdminService.listHistory(prisma, {
+        direction: direction || undefined,
+        status: status || undefined,
+        dateFrom: parseDateOrUndefined(dateFrom),
+        dateTo: parseDateOrUndefined(dateTo),
+        limit: limit ? Number(limit) : undefined,
+        offset: offset ? Number(offset) : undefined,
       });
       res.json(result);
     } catch (err) {
