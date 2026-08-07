@@ -41,7 +41,7 @@ export default function AdminNotifyPage() {
   const { requests, pendingCount } = state.data;
 
   return (
-    <div className="max-w-[560px]">
+    <div className="max-w-[820px]">
       <div className="mb-6">
         <div className="tab text-[32px] font-semibold tracking-tight">
           {pendingCount} <span className="text-base font-normal text-muted">waiting to be told we've reopened</span>

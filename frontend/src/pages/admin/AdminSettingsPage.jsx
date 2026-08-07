@@ -121,7 +121,7 @@ export default function AdminSettingsPage() {
   }
 
   return (
-    <div className="max-w-[560px]">
+    <div className="max-w-[820px]">
       <div className="border-b border-rule pb-4">
         <div className="text-[19px] font-semibold">Operator settings</div>
         <p className="mt-1.5 text-xs text-muted">Changes preview instantly below. Nothing reaches customers until you save.</p>

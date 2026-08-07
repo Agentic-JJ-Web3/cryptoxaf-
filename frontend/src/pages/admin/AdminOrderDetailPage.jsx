@@ -46,7 +46,7 @@ export default function AdminOrderDetailPage() {
   const addrMid = order.destinationAddress.slice(6, -6);
 
   return (
-    <div className="max-w-[560px]">
+    <div className="max-w-[820px]">
       <Link to="/admin/queue" className="mb-4 inline-block text-xs font-medium text-muted hover:text-ink-2">
         &larr; Queue
       </Link>
