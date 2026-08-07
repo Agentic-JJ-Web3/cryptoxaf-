@@ -11,19 +11,46 @@ const EMPTY_DRAFT = {
   momoNetwork: 'MTN',
   momoNumber: '',
   momoAccountName: '',
+  sellMarginPct: null,
+  sellDepositAddressTron: '',
+  sellDepositAddressBsc: '',
 };
 
 function draftFromSettings(settings) {
   if (!settings) return EMPTY_DRAFT;
-  const { xafUsdtRate, tronNetworkFeeXaf, bscNetworkFeeXaf, targetMarginPct, rateTtlSeconds, momoNetwork, momoNumber, momoAccountName } =
-    settings;
-  return { xafUsdtRate, tronNetworkFeeXaf, bscNetworkFeeXaf, targetMarginPct, rateTtlSeconds, momoNetwork, momoNumber, momoAccountName };
+  const {
+    xafUsdtRate,
+    tronNetworkFeeXaf,
+    bscNetworkFeeXaf,
+    targetMarginPct,
+    rateTtlSeconds,
+    momoNetwork,
+    momoNumber,
+    momoAccountName,
+    sellMarginPct,
+    sellDepositAddressTron,
+    sellDepositAddressBsc,
+  } = settings;
+  return {
+    xafUsdtRate,
+    tronNetworkFeeXaf,
+    bscNetworkFeeXaf,
+    targetMarginPct,
+    rateTtlSeconds,
+    momoNetwork,
+    momoNumber,
+    momoAccountName,
+    sellMarginPct: sellMarginPct ?? null,
+    sellDepositAddressTron: sellDepositAddressTron || '',
+    sellDepositAddressBsc: sellDepositAddressBsc || '',
+  };
 }
 
 export default function AdminSettingsPage() {
   const [status, setStatus] = useState('loading');
   const [error, setError] = useState(null);
   const [marginRange, setMarginRange] = useState({ min: 0.5, max: 10 });
+  const [sellMarginRange, setSellMarginRange] = useState({ min: 0.5, max: 10 });
   const [live, setLive] = useState(EMPTY_DRAFT);
   const [draft, setDraft] = useState(EMPTY_DRAFT);
   const [saving, setSaving] = useState(false);
@@ -36,6 +63,7 @@ export default function AdminSettingsPage() {
         const res = await adminApi.getSettings();
         if (cancelled) return;
         setMarginRange(res.marginClampRangePct);
+        setSellMarginRange(res.sellMarginClampRangePct);
         const next = draftFromSettings(res.settings);
         setLive(next);
         setDraft(next);
@@ -168,7 +196,7 @@ export default function AdminSettingsPage() {
         <p className="mt-1.5 text-xs text-muted">Quotes fail closed once this settings row is older than the TTL.</p>
       </Section>
 
-      <Section title="MoMo shown to customers" last>
+      <Section title="MoMo shown to customers">
         <div className="grid grid-cols-2 gap-2.5">
           <Field label="Network">
             <select
@@ -197,6 +225,57 @@ export default function AdminSettingsPage() {
             className="w-full border-0 bg-transparent text-[14px] text-ink outline-none"
           />
         </Field>
+      </Section>
+
+      <Section title="Sell (USDT → XAF)" last>
+        <div
+          className="mb-3.5 rounded-md border px-3 py-2 text-[11px] font-semibold"
+          style={{
+            borderColor: draft.sellMarginPct != null && draft.sellDepositAddressTron && draft.sellDepositAddressBsc ? 'var(--vault)' : 'var(--rule)',
+            color: draft.sellMarginPct != null && draft.sellDepositAddressTron && draft.sellDepositAddressBsc ? 'var(--vault)' : 'var(--muted)',
+          }}
+        >
+          {draft.sellMarginPct != null && draft.sellDepositAddressTron && draft.sellDepositAddressBsc
+            ? 'Sell is available to customers'
+            : 'Sell is unavailable — margin and both deposit addresses are required'}
+        </div>
+        <Field label="Margin below market rate (%) — leave blank to turn sell off">
+          <input
+            type="number"
+            step="0.1"
+            value={draft.sellMarginPct ?? ''}
+            onChange={(e) => update('sellMarginPct', e.target.value === '' ? null : parseFloat(e.target.value))}
+            placeholder="off"
+            className="tab w-full border-0 bg-transparent text-lg font-semibold text-ink outline-none"
+          />
+        </Field>
+        {draft.sellMarginPct != null && (draft.sellMarginPct < sellMarginRange.min || draft.sellMarginPct > sellMarginRange.max) && (
+          <div className="mb-3.5 -mt-2 text-[11px] text-fee">
+            Clamped at quote time to {sellMarginRange.min}%–{sellMarginRange.max}%.
+          </div>
+        )}
+        <Field label="Deposit address · Tron (TRC-20)">
+          <input
+            type="text"
+            value={draft.sellDepositAddressTron}
+            onChange={(e) => update('sellDepositAddressTron', e.target.value)}
+            placeholder="empty = sell off on this chain"
+            className="w-full border-0 bg-transparent font-mono text-[13px] text-ink outline-none"
+          />
+        </Field>
+        <Field label="Deposit address · BNB Smart Chain (BEP-20)">
+          <input
+            type="text"
+            value={draft.sellDepositAddressBsc}
+            onChange={(e) => update('sellDepositAddressBsc', e.target.value)}
+            placeholder="empty = sell off on this chain"
+            className="w-full border-0 bg-transparent font-mono text-[13px] text-ink outline-none"
+          />
+        </Field>
+        <p className="text-xs text-muted">
+          These are the platform's own wallets — customers send USDT here. Validated the same way a customer's
+          destination address is when you save.
+        </p>
       </Section>
 
       {isDirty && (
