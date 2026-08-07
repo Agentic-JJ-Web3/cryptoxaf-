@@ -41,22 +41,28 @@ function rateSnapshotInput(overrides = {}) {
 
 function orderInput(overrides = {}) {
   const chain = overrides.chain ?? 'TRON';
+  const direction = overrides.direction ?? 'BUY';
   return {
     reference: nextReference(),
     chain,
+    direction,
     destinationAddress: chain === 'BSC' ? '0x1111111111111111111111111111111111111a' : 'TAbcdefghijklmnopqrstuvwxyzABCDE1',
     xafAmount: 10_000,
     usdtAmount: toUsdtBaseUnits(chain, '15'),
     quoteExpiresAt: new Date(Date.now() + 15 * 60 * 1000),
     rateSnapshot: rateSnapshotInput(chain === 'BSC' ? { chain } : {}),
+    // Sell requires the payout destination up front; buy collects it later
+    // (claim-payment), so only default it in for sell fixtures.
+    ...(direction === 'SELL' ? { customerMomoNumber: '677000000', customerMomoNetwork: 'MTN' } : {}),
     ...overrides,
   };
 }
 
 // Walks a fresh order through the legal transitions needed to land on
 // `status`, so tests can start from any state without re-deriving the path
-// through the state machine themselves.
-const PATH_TO_STATUS = {
+// through the state machine themselves. Buy and sell share the terminal
+// statuses but reach them via different intermediate edges.
+const BUY_PATH_TO_STATUS = {
   QUOTED: [],
   AWAITING_PAYMENT: ['AWAITING_PAYMENT'],
   PAYMENT_CLAIMED: ['AWAITING_PAYMENT', 'PAYMENT_CLAIMED'],
@@ -67,11 +73,24 @@ const PATH_TO_STATUS = {
   EXPIRED: ['EXPIRED'],
 };
 
+const SELL_PATH_TO_STATUS = {
+  QUOTED: [],
+  AWAITING_DEPOSIT: ['AWAITING_DEPOSIT'],
+  DEPOSIT_CLAIMED: ['AWAITING_DEPOSIT', 'DEPOSIT_CLAIMED'],
+  DEPOSIT_VERIFIED: ['AWAITING_DEPOSIT', 'DEPOSIT_CLAIMED', 'DEPOSIT_VERIFIED'],
+  COMPLETED: ['AWAITING_DEPOSIT', 'DEPOSIT_CLAIMED', 'DEPOSIT_VERIFIED', 'COMPLETED'],
+  REFUND_DUE: ['AWAITING_DEPOSIT', 'DEPOSIT_CLAIMED', 'REFUND_DUE'],
+  REFUNDED: ['AWAITING_DEPOSIT', 'DEPOSIT_CLAIMED', 'REFUND_DUE', 'REFUNDED'],
+  EXPIRED: ['EXPIRED'],
+};
+
 async function createOrderAt(status, overrides = {}) {
-  const order = await createOrder(prisma, orderInput(overrides));
+  const input = orderInput(overrides);
+  const order = await createOrder(prisma, input);
+  const pathToStatus = input.direction === 'SELL' ? SELL_PATH_TO_STATUS : BUY_PATH_TO_STATUS;
   let current = order;
 
-  for (const toStatus of PATH_TO_STATUS[status]) {
+  for (const toStatus of pathToStatus[status]) {
     current = await transitionOrder(prisma, {
       orderId: order.id,
       toStatus,
@@ -82,6 +101,7 @@ async function createOrderAt(status, overrides = {}) {
         ...(toStatus === 'PAYMENT_CLAIMED'
           ? { paymentReference: 'MP-FIXTURE-TX', customerMomoNumber: '+237600000000' }
           : {}),
+        ...(toStatus === 'DEPOSIT_CLAIMED' ? { paymentReference: '0xfixture-deposit-tx' } : {}),
         ...(toStatus === 'COMPLETED' ? { payoutReference: `0xhash-${order.id}` } : {}),
       },
     });

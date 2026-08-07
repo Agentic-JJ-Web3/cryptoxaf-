@@ -2,6 +2,9 @@ const request = require('supertest');
 const { prisma, resetDb, createTestOperator, createOrderAt, seedPlatformSettings } = require('./testDb');
 const { buildTestApp } = require('./testApp');
 
+const TRON_ADDRESS = 'TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE';
+const BSC_ADDRESS = '0x9F3c2e7a1B4D8C6F0A2e5D9B3C7f1A4e8D2B6c0f';
+
 afterEach(async () => {
   await resetDb();
 });
@@ -110,6 +113,46 @@ describe('PUT /api/admin/settings', () => {
     // preview shows what will actually be quoted.
     expect(res.body.settings.effectiveMarginPct).toBe(10);
   });
+
+  test('sell fields default to null/unavailable until an operator configures them', async () => {
+    const app = buildTestApp();
+    const { agent } = await loginAgent(app);
+
+    const res = await agent.put('/api/admin/settings').send(validPayload);
+
+    expect(res.status).toBe(200);
+    expect(res.body.settings.sellMarginPct).toBeNull();
+    expect(res.body.settings.sellAvailable).toBe(false);
+  });
+
+  test('accepts a real deposit address per chain and marks sell available once both are set', async () => {
+    const app = buildTestApp();
+    const { agent } = await loginAgent(app);
+
+    const res = await agent.put('/api/admin/settings').send({
+      ...validPayload,
+      sellMarginPct: 1.5,
+      sellDepositAddressTron: TRON_ADDRESS,
+      sellDepositAddressBsc: BSC_ADDRESS,
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.settings.sellMarginPct).toBe(1.5);
+    expect(res.body.settings.sellDepositAddressTron).toBe(TRON_ADDRESS);
+    expect(res.body.settings.sellAvailable).toBe(true);
+  }, 15000);
+
+  test('rejects a deposit address on the wrong chain', async () => {
+    const app = buildTestApp();
+    const { agent } = await loginAgent(app);
+
+    const res = await agent.put('/api/admin/settings').send({
+      ...validPayload,
+      sellDepositAddressTron: BSC_ADDRESS, // wrong chain for this field
+    });
+
+    expect(res.status).toBe(400);
+  }, 15000);
 });
 
 describe('getTodayStats USDT normalization', () => {

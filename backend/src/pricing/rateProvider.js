@@ -6,8 +6,16 @@ const { RateUnavailableError } = require('./errors');
 const MIN_MARGIN_BPS = 50; // 0.50% floor
 const MAX_MARGIN_BPS = 1000; // 10% ceiling above market
 
+// Same shape, sell side: how far below market the payout rate sits.
+const MIN_SELL_MARGIN_BPS = 50; // 0.50% floor below market
+const MAX_SELL_MARGIN_BPS = 1000; // 10% ceiling below market
+
 function clampMarginBps(bps) {
   return Math.min(Math.max(bps, MIN_MARGIN_BPS), MAX_MARGIN_BPS);
+}
+
+function clampSellMarginBps(bps) {
+  return Math.min(Math.max(bps, MIN_SELL_MARGIN_BPS), MAX_SELL_MARGIN_BPS);
 }
 
 async function loadFreshSettings(prisma) {
@@ -46,6 +54,30 @@ async function getRate(prisma, chain) {
   };
 }
 
+// Sell (USDT -> XAF) side of the same manual RateProvider. Fails closed if
+// sellMarginBps or the deposit address for `chain` is unset — an operator
+// must deliberately turn sell on via admin settings, it never silently
+// activates just because the buy-side rate row exists.
+async function getSellRate(prisma, chain) {
+  const settings = await loadFreshSettings(prisma);
+
+  const depositAddress = chain === 'TRON' ? settings.sellDepositAddressTron : settings.sellDepositAddressBsc;
+  if (settings.sellMarginBps == null || !depositAddress) {
+    throw new RateUnavailableError('Sell is not available yet');
+  }
+
+  const targetMarginBps = clampSellMarginBps(settings.sellMarginBps);
+  const quotedRateMicros = (settings.xafUsdtRateMicros * BigInt(10000 - targetMarginBps)) / 10000n;
+
+  return {
+    marketRateMicros: settings.xafUsdtRateMicros,
+    targetMarginBps,
+    quotedRateMicros,
+    depositAddress,
+    updatedAt: settings.updatedAt,
+  };
+}
+
 // The market rate and both chains' flat fees, with no address needed —
 // the swap screen's live ticker and the chain fee-comparison cards both
 // need this before the customer has typed anything.
@@ -59,4 +91,14 @@ async function getMarketRate(prisma) {
   };
 }
 
-module.exports = { getRate, getMarketRate, clampMarginBps, MIN_MARGIN_BPS, MAX_MARGIN_BPS };
+module.exports = {
+  getRate,
+  getSellRate,
+  getMarketRate,
+  clampMarginBps,
+  clampSellMarginBps,
+  MIN_MARGIN_BPS,
+  MAX_MARGIN_BPS,
+  MIN_SELL_MARGIN_BPS,
+  MAX_SELL_MARGIN_BPS,
+};

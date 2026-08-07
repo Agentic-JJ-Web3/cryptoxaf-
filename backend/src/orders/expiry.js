@@ -1,7 +1,7 @@
 const { decimalToBigInt } = require('../db/money');
 const { transitionOrder, IllegalTransitionError } = require('./orderService');
 
-const EXPIRABLE_STATUSES = new Set(['QUOTED', 'AWAITING_PAYMENT']);
+const EXPIRABLE_STATUSES = new Set(['QUOTED', 'AWAITING_PAYMENT', 'AWAITING_DEPOSIT']);
 
 // Order objects from a raw prisma.order.findUnique() carry usdtAmount as a
 // Prisma Decimal; ones from orderService already carry it as BigInt (see

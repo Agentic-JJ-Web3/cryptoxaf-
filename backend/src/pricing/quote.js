@@ -26,4 +26,25 @@ function computeQuote({ xafAmount, chain, rate }) {
   };
 }
 
-module.exports = { computeQuote };
+// Sell side: usdtAmount is already base units (BigInt), converted by the
+// caller via toUsdtBaseUnits — same conversion createSellOrder/preview use
+// for every other USDT amount in this codebase. Floors toward the platform
+// (pays out less XAF, never more), same safe direction as computeQuote.
+function computeSellQuote({ usdtAmount, chain, rate }) {
+  const decimals = usdtDecimalsFor(chain);
+  const xafAmountBig = (usdtAmount * rate.quotedRateMicros) / (10n ** BigInt(decimals) * RATE_SCALE);
+  const xafAmount = Number(xafAmountBig);
+
+  if (!Number.isFinite(xafAmount) || xafAmount <= 0) {
+    throw new AmountTooSmallError();
+  }
+
+  return {
+    marketRateMicros: rate.marketRateMicros,
+    targetMarginBps: rate.targetMarginBps,
+    quotedRateMicros: rate.quotedRateMicros,
+    xafAmount,
+  };
+}
+
+module.exports = { computeQuote, computeSellQuote };

@@ -107,4 +107,12 @@ async function validateDestinationAddress(address) {
   return { chain, normalizedAddress, ...headTail(normalizedAddress) };
 }
 
-module.exports = { detectChainAndShapeError, validateDestinationAddress, headTail };
+module.exports = {
+  detectChainAndShapeError,
+  validateDestinationAddress,
+  headTail,
+  getTronWeb,
+  getBscProvider,
+  withTimeout,
+  RPC_TIMEOUT_MS,
+};
