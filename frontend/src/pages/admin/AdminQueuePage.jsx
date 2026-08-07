@@ -102,7 +102,18 @@ function QueueRow({ order, onClick }) {
         </div>
       </div>
       <div className="min-w-0 flex-1">
-        <div className="font-mono text-sm font-medium text-ink">{order.reference}</div>
+        <div className="flex items-center gap-1.5">
+          <span
+            className="flex-none rounded border px-1 py-0.5 text-[9px] font-semibold leading-none"
+            style={{
+              borderColor: order.direction === 'SELL' ? 'var(--fee)' : 'var(--vault)',
+              color: order.direction === 'SELL' ? 'var(--fee)' : 'var(--vault)',
+            }}
+          >
+            {order.direction}
+          </span>
+          <div className="font-mono text-sm font-medium text-ink">{order.reference}</div>
+        </div>
         <div className="tab mt-0.5 text-xs text-muted">
           {formatXaf(order.xafAmount)} XAF · {order.chain === 'TRON' ? 'TRC-20' : 'BEP-20'}
         </div>
