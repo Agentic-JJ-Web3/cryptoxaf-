@@ -6,9 +6,9 @@ Read this fully before writing code in this repo.
 
 ## What this is
 
-A Cameroonian platform for swapping XAF and USDT over Mobile Money. No accounts, no passwords, no signup — a session-based swap where the order reference is the identity. Two chains: USDT on Tron (TRC-20) and on BNB Smart Chain (BEP-20).
+A Cameroonian platform for swapping XAF and USDT over Mobile Money — both directions: **buy** (XAF → USDT) and **sell** (USDT → XAF). No accounts, no passwords, no signup — a session-based swap where the order reference is the identity. Two chains: USDT on Tron (TRC-20) and on BNB Smart Chain (BEP-20).
 
-**Settlement is currently manual.** A human operator confirms the incoming MoMo payment in their own phone app, then sends the USDT by hand from a wallet and records the transaction hash. Automation comes later. Everything is built as though it were automated, with humans wired in as the executors.
+**Settlement is currently manual, both directions.** Buy: a human operator confirms the incoming MoMo payment in their own phone app, then sends the USDT by hand from a wallet and records the transaction hash. Sell: the operator confirms the incoming USDT deposit (system-assisted — see "Sell flow" below), then sends XAF by hand via MoMo and records the confirmation code. Automation comes later. Everything is built as though it were automated, with humans wired in as the executors.
 
 Revenue is an FX spread plus a pass-through network fee.
 
@@ -71,6 +71,30 @@ QUOTED → AWAITING_PAYMENT → PAYMENT_CLAIMED → PAYMENT_VERIFIED → COMPLET
 
 ---
 
+## Sell flow
+
+USDT → XAF is a second, parallel state machine on the same `Order` model (a `direction` column, `BUY` or `SELL`), sharing the terminal states with buy:
+
+```
+QUOTED → AWAITING_DEPOSIT → DEPOSIT_CLAIMED → DEPOSIT_VERIFIED → COMPLETED
+                ↓                    ↓
+             EXPIRED            REFUND_DUE → REFUNDED
+```
+
+Reusing `PAYMENT_CLAIMED` etc. for a crypto deposit would read as evasive in a different way — an operator misreading what's actually pending. `COMPLETED` here means the MoMo payout was sent, not USDT.
+
+**Chain is customer-*selected* for sell — the one deliberate exception to Address Validation's "chain is detected from the address, never selected by the user."** There's no customer address to detect a chain from at order creation; the customer is choosing which of the *platform's own* two fixed deposit addresses (admin-settings-configured, one per chain) to send USDT to. The address the customer *does* provide at creation (`destinationAddress`, still run through the same `validateDestinationAddress`) is their own wallet — a refund-safety-net only, used solely if the deposit is ever rejected. It is never a payout target for sell and the UI never implies otherwise.
+
+**Deposit verification is system-assisted, not automated.** When the customer submits a tx hash, the admin panel runs a read-only on-chain lookup (`backend/src/chain/depositVerification.js`, same RPC clients as address validation — decodes the TRC-20/BEP-20 `Transfer` event, checks recipient and amount) and shows the operator what it found. The operator still clicks confirm or reject. This is the same category of work as `validateDestinationAddress` — reading the chain, not moving funds — and must stay that way; do not wire it to auto-transition an order.
+
+**Screenshot is a valid alternative to a tx hash when claiming a deposit** (sell only — buy's MoMo transaction ID field is unaffected). At least one is required. A screenshot-only claim has nothing to look up on-chain — the operator's manual review of the image *is* the verification. Screenshots live on local disk (gitignored `backend/uploads/receipts/`, UUID-named — never the order reference), served **only** through an authenticated admin route. Never a public static mount, never named in a way that leaks which order it belongs to.
+
+**Pricing mirrors buy, inverted:** `sell_quoted_rate = market_rate × (1 - sell_target_pct)`, same clamp discipline (`MIN_SELL_MARGIN_BPS`/`MAX_SELL_MARGIN_BPS` in `rateProvider.js`). Sell stays off — fails closed with `RateUnavailableError` — until an operator explicitly sets a sell margin *and* both deposit addresses in admin settings. No network fee is deducted from the XAF payout (the customer pays their own gas to deposit; there's no equivalent platform cost to pass through).
+
+**`payoutReference`, not `payoutTxHash`.** Renamed for direction-neutral accuracy: buy stores a real on-chain hash there; sell stores a MoMo payout confirmation code, which is not a tx hash at all.
+
+---
+
 ## Reviews
 
 A buyer can rate+comment on their own **completed** swap, once — the review sits `PENDING` until an operator approves or rejects it from the admin queue. Nothing reaches the public list without a human in the loop.
@@ -96,8 +120,10 @@ The landing page's "recent activity" strip is **real, anonymized `COMPLETED` ord
 Both sides of the transaction sit behind an interface so automation is a swap, not a rewrite.
 
 ```
-PaymentCollector   →  ManualMoMoCollector    | CampayCollector
-PayoutExecutor     →  ManualPayoutExecutor   | TronPayoutExecutor | BscPayoutExecutor
+PaymentCollector   →  ManualMoMoCollector    | CampayCollector           (buy: collects XAF)
+PayoutExecutor     →  ManualPayoutExecutor   | TronPayoutExecutor | BscPayoutExecutor   (buy: sends USDT)
+DepositCollector   →  ManualDepositCollector | ...                       (sell: collects USDT — today, an operator-reviewed on-chain lookup, see "Sell flow")
+MomoPayoutExecutor →  ManualMomoPayoutExecutor | CampayPayoutExecutor    (sell: sends XAF)
 ```
 
 The state machine must never know which implementation is behind it. **Only the manual implementations exist right now.** Do not build the automated executors until explicitly asked — including "while we're here" or "for completeness."
@@ -108,7 +134,7 @@ The state machine must never know which implementation is behind it. **Only the 
 
 Run server-side at order creation. Client-side checks are UX, not security.
 
-**Chain is detected from the address, never selected by the user.** The formats are mutually exclusive:
+**Chain is detected from the address, never selected by the user** — for buy. Sell has the one deliberate exception to this rule; see "Sell flow" above. The formats are mutually exclusive:
 
 - Tron — Base58Check, starts with `T`, exactly 34 chars, Base58 alphabet (no `0`, `O`, `I`, `l`)
 - EVM — `0x` plus exactly 40 hex chars
@@ -205,9 +231,9 @@ Never promise speed the system can't control. Settlement is manual. The UI says 
 4. How it works, closed state, device-local order history — done
 5. Admin settings — done
 
-All five are built. Since then, additively: reviews + admin moderation, the live activity ticker, an admin "notify me" queue, and a landing page redesign (desktop layout, mobile app-shell nav).
+All five are built. Since then, additively: reviews + admin moderation, the live activity ticker, an admin "notify me" queue, a landing page redesign (desktop layout, mobile app-shell nav), and the sell flow (USDT → XAF — see "Sell flow" above) with its own admin settings section and order-detail stage panels.
 
-Automated payout and the sell flow are explicitly out of scope until asked.
+Automated payout remains explicitly out of scope until asked — sell's deposit verification is system-assisted (read-only chain lookup, operator confirms), not automated fund movement; see "Sell flow" for the distinction. Live pricing feeds (Binance P2P, gas oracles) are still manual-settings-driven, not yet live.
 
 ---
 
