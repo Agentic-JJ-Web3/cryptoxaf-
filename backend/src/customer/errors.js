@@ -5,6 +5,13 @@ class InvalidAmountError extends Error {
   }
 }
 
+class InvalidUsdtAmountError extends Error {
+  constructor() {
+    super('Enter a USDT amount');
+    this.name = 'InvalidUsdtAmountError';
+  }
+}
+
 class BscConfirmationRequiredError extends Error {
   constructor() {
     super('Confirm the destination accepts USDT on BNB Smart Chain before continuing');
@@ -33,10 +40,27 @@ class ReviewAlreadyExistsError extends Error {
   }
 }
 
+class DepositProofRequiredError extends Error {
+  constructor() {
+    super('Enter the transaction hash or attach a screenshot of the transfer');
+    this.name = 'DepositProofRequiredError';
+  }
+}
+
+class InvalidReceiptFileError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'InvalidReceiptFileError';
+  }
+}
+
 module.exports = {
   InvalidAmountError,
+  InvalidUsdtAmountError,
   BscConfirmationRequiredError,
   PlatformClosedError,
   OrderNotReviewableError,
   ReviewAlreadyExistsError,
+  DepositProofRequiredError,
+  InvalidReceiptFileError,
 };
