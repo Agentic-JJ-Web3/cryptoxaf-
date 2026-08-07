@@ -12,13 +12,16 @@ import { saveOrderToHistory } from '../lib/orderHistory';
 
 const POLL_MS = 6000;
 
-const TIMELINE_STEPS = [
-  { key: 'waiting', label: 'Waiting for your payment' },
-  { key: 'checking', label: 'Checking your payment' },
-  { key: 'sent', label: 'USDT sent' },
-  { key: 'refund', label: 'Refund on the way' },
-];
 const TIMELINE_ORDER = ['waiting', 'checking', 'sent', 'refund'];
+
+function timelineSteps(isSell) {
+  return [
+    { key: 'waiting', label: isSell ? 'Waiting for your deposit' : 'Waiting for your payment' },
+    { key: 'checking', label: isSell ? 'Checking your deposit' : 'Checking your payment' },
+    { key: 'sent', label: isSell ? 'Payout sent' : 'USDT sent' },
+    { key: 'refund', label: 'Refund on the way' },
+  ];
+}
 
 function buildWhatsappUrl(reference) {
   const number = import.meta.env.VITE_SUPPORT_WHATSAPP;
@@ -90,6 +93,7 @@ export default function OrderStatusPage() {
   }
 
   const { order } = state;
+  const isSell = order.direction === 'SELL';
   const stage = stageFromStatus(order.status);
   const whatsappUrl = buildWhatsappUrl(order.reference);
   const { head: addrHead, tail: addrTail } = headTail(order.destinationAddress);
@@ -103,12 +107,13 @@ export default function OrderStatusPage() {
   const elapsedMin = Math.floor(elapsedMs / 60000);
   const elapsedSec = Math.floor(elapsedMs / 1000) % 60;
   const pad = (n) => String(n).padStart(2, '0');
+  const sinceWord = isSell ? 'deposit' : 'payment';
   const elapsedLabel =
     stage === 'sent'
-      ? `Sent ${elapsedMin} min after payment`
+      ? `Sent ${elapsedMin} min after ${sinceWord}`
       : stage === 'refund'
         ? `Refund initiated ${elapsedMin} min ago`
-        : `${pad(elapsedMin)}:${pad(elapsedSec)} since payment`;
+        : `${pad(elapsedMin)}:${pad(elapsedSec)} since ${sinceWord}`;
 
   return (
     <Shell>
@@ -121,7 +126,8 @@ export default function OrderStatusPage() {
         </div>
         {order.paymentReference && (
           <div className="mt-2.5 text-xs text-muted">
-            Paid via MoMo · ref <span className="font-mono text-ink-2">{order.paymentReference}</span>
+            {isSell ? 'Deposit tx' : 'Paid via MoMo'} · ref{' '}
+            <span className="font-mono text-ink-2">{order.paymentReference}</span>
           </div>
         )}
       </div>
@@ -129,12 +135,16 @@ export default function OrderStatusPage() {
       {/* STATE PANEL */}
       {stage === 'waiting' && (
         <div className="border-b border-rule-soft py-5.5">
-          <div className="text-[17px] font-semibold text-ink">Waiting for your payment</div>
+          <div className="text-[17px] font-semibold text-ink">
+            {isSell ? 'Waiting for your deposit' : 'Waiting for your payment'}
+          </div>
           <p className="my-2 mb-3.5 text-[13px] leading-relaxed text-ink-2">
-            We check for your MoMo payment automatically. Nothing to do here yet.
+            {isSell
+              ? 'We check for your USDT deposit automatically. Nothing to do here yet.'
+              : 'We check for your MoMo payment automatically. Nothing to do here yet.'}
           </p>
-          <Link to={`/pay/${order.reference}`} className="text-sm font-semibold text-vault">
-            Go to payment instructions →
+          <Link to={isSell ? `/deposit/${order.reference}` : `/pay/${order.reference}`} className="text-sm font-semibold text-vault">
+            {isSell ? 'Go to deposit instructions →' : 'Go to payment instructions →'}
           </Link>
         </div>
       )}
@@ -143,10 +153,14 @@ export default function OrderStatusPage() {
         <div className="border-b border-rule-soft py-5.5">
           <div className="flex items-center gap-2">
             <span className="h-2.5 w-2.5 flex-none animate-livepulse rounded-full bg-live" />
-            <span className="text-[17px] font-semibold text-ink">Checking your payment</span>
+            <span className="text-[17px] font-semibold text-ink">
+              {isSell ? 'Checking your deposit' : 'Checking your payment'}
+            </span>
           </div>
           <p className="my-2 mb-1 text-[13px] leading-relaxed text-ink-2">
-            Your MoMo payment arrived. Confirming the amount now.
+            {isSell
+              ? 'Your USDT deposit arrived. Confirming the amount now.'
+              : 'Your MoMo payment arrived. Confirming the amount now.'}
           </p>
           <div className="my-2.5 flex gap-1">
             {[0, 1, 2].map((i) => (
@@ -166,7 +180,7 @@ export default function OrderStatusPage() {
           <svg width="34" height="34" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M4 12.5L9.5 18L20 6" stroke="#0E1A16" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          <div className="mt-3 text-[22px] font-semibold">USDT sent</div>
+          <div className="mt-3 text-[22px] font-semibold">{isSell ? 'Payout sent' : 'USDT sent'}</div>
           <p className="mt-1.5 text-[13px] opacity-80">{elapsedLabel}</p>
 
           {order.explorerTxUrl && (
@@ -205,8 +219,9 @@ export default function OrderStatusPage() {
             {order.refundReason || 'This order could not be completed.'}
           </p>
           <div className="text-[13px] leading-relaxed text-ink-2">
-            Your {formatXaf(order.xafAmount)} XAF is being returned to the MoMo number you paid from. Refunds
-            arrive within 30 minutes.
+            {isSell
+              ? `Your ${formatUsdtBaseUnits(order.usdtAmount, USDT_DECIMALS[order.chain])} USDT is being returned to the wallet address you gave us. Refunds arrive within 30 minutes.`
+              : `Your ${formatXaf(order.xafAmount)} XAF is being returned to the MoMo number you paid from. Refunds arrive within 30 minutes.`}
           </div>
           {whatsappUrl && (
             <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="mt-3.5 inline-block text-sm font-semibold text-fault underline">
@@ -233,7 +248,7 @@ export default function OrderStatusPage() {
         <div className="border-b border-rule-soft py-5">
           <div className="mb-3.5 font-mono text-[11px] uppercase tracking-wider text-muted">Order timeline</div>
           <div className="flex flex-col gap-2.5">
-            {TIMELINE_STEPS.map((step) => {
+            {timelineSteps(isSell).map((step) => {
               const stepIdx = TIMELINE_ORDER.indexOf(step.key);
               const currentIdx = TIMELINE_ORDER.indexOf(stage);
               const isCurrent = step.key === stage;
@@ -276,7 +291,14 @@ export default function OrderStatusPage() {
               />
             </>
           )}
-          <LedgerRow label="Amount paid" value={`${formatXaf(order.xafAmount)} XAF`} />
+          <LedgerRow
+            label={isSell ? 'Amount sent' : 'Amount paid'}
+            value={
+              isSell
+                ? `${formatUsdtBaseUnits(order.usdtAmount, USDT_DECIMALS[order.chain])} USDT`
+                : `${formatXaf(order.xafAmount)} XAF`
+            }
+          />
 
           <Perforation />
 
@@ -284,15 +306,32 @@ export default function OrderStatusPage() {
             <div className="flex items-baseline justify-between">
               <span className="text-[13px] font-medium text-ink">Refund amount</span>
               <span className="tab text-[26px] font-semibold tracking-tight text-fault">
-                {formatXaf(order.xafAmount)} <span className="text-sm font-normal text-muted">XAF</span>
+                {isSell ? (
+                  <>
+                    {formatUsdtBaseUnits(order.usdtAmount, USDT_DECIMALS[order.chain])}{' '}
+                    <span className="text-sm font-normal text-muted">USDT</span>
+                  </>
+                ) : (
+                  <>
+                    {formatXaf(order.xafAmount)} <span className="text-sm font-normal text-muted">XAF</span>
+                  </>
+                )}
               </span>
             </div>
           ) : (
             <div className="flex items-baseline justify-between">
               <span className="text-[13px] font-medium text-ink">Amount received</span>
               <span className="tab text-[26px] font-semibold tracking-tight text-ink">
-                {formatUsdtBaseUnits(order.usdtAmount, USDT_DECIMALS[order.chain])}{' '}
-                <span className="text-sm font-normal text-muted">USDT</span>
+                {isSell ? (
+                  <>
+                    {formatXaf(order.xafAmount)} <span className="text-sm font-normal text-muted">XAF</span>
+                  </>
+                ) : (
+                  <>
+                    {formatUsdtBaseUnits(order.usdtAmount, USDT_DECIMALS[order.chain])}{' '}
+                    <span className="text-sm font-normal text-muted">USDT</span>
+                  </>
+                )}
               </span>
             </div>
           )}
@@ -300,16 +339,19 @@ export default function OrderStatusPage() {
       </div>
 
       {/* DESTINATION */}
-      <div className="border-t border-rule-soft py-5.5" style={{ opacity: stage === 'refund' ? 0.55 : 1 }}>
+      <div className="border-t border-rule-soft py-5.5" style={{ opacity: isSell || stage === 'refund' ? 0.55 : 1 }}>
         <div className="mb-2.5 font-mono text-[11px] uppercase tracking-wider text-muted">
-          Destination wallet · {CHAIN_LABELS[order.chain]}
+          {isSell ? 'Your wallet (refund only)' : 'Destination wallet'} · {CHAIN_LABELS[order.chain]}
         </div>
         <div className="break-all font-mono text-sm leading-relaxed" style={{ color: 'var(--rule)' }}>
           <span style={{ color: 'var(--ink)' }}>{addrHead}</span>
           <span>{addrMid}</span>
           <span style={{ color: 'var(--ink)' }}>{addrTail}</span>
         </div>
-        {stage === 'refund' && <div className="mt-2 text-xs text-muted">Not used — this order did not settle.</div>}
+        {isSell && stage !== 'refund' && (
+          <div className="mt-2 text-xs text-muted">Only used if your deposit needs to be refunded.</div>
+        )}
+        {stage === 'refund' && !isSell && <div className="mt-2 text-xs text-muted">Not used — this order did not settle.</div>}
       </div>
 
       {/* SUPPORT */}
