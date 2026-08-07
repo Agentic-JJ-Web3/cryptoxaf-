@@ -1,18 +1,35 @@
 const { decimalToBigInt } = require('../db/money');
 const { usdtDecimalsFor } = require('../config/chains');
 const { transitionOrder, OrderNotFoundError } = require('../orders/orderService');
+const { verifyDeposit } = require('../chain/depositVerification');
+const { getSellRate } = require('../pricing/rateProvider');
 
 const STATS_DECIMALS = 6n;
+
+class NoDepositReferenceError extends Error {
+  constructor() {
+    super('This order has no submitted transaction hash to check');
+    this.name = 'NoDepositReferenceError';
+  }
+}
 
 // What the operator queue shows by default: everything except the fully
 // resolved terminal states. AWAITING_PAYMENT/PAYMENT_CLAIMED aren't a
 // one-tap action yet, but the queue still lists them (elapsed time is
 // exactly what tells an operator a customer is stuck).
-const QUEUE_STATUSES = ['AWAITING_PAYMENT', 'PAYMENT_CLAIMED', 'PAYMENT_VERIFIED', 'REFUND_DUE'];
+const QUEUE_STATUSES = [
+  'AWAITING_PAYMENT',
+  'PAYMENT_CLAIMED',
+  'PAYMENT_VERIFIED',
+  'AWAITING_DEPOSIT',
+  'DEPOSIT_CLAIMED',
+  'DEPOSIT_VERIFIED',
+  'REFUND_DUE',
+];
 
 // Statuses where the next step is an unambiguous operator action (verify,
 // send, or refund) rather than just waiting on the customer.
-const ACTIONABLE_STATUSES = new Set(['PAYMENT_CLAIMED', 'PAYMENT_VERIFIED', 'REFUND_DUE']);
+const ACTIONABLE_STATUSES = new Set(['PAYMENT_CLAIMED', 'PAYMENT_VERIFIED', 'DEPOSIT_CLAIMED', 'DEPOSIT_VERIFIED', 'REFUND_DUE']);
 
 function serializeOrder(order) {
   return { ...order, usdtAmount: decimalToBigInt(order.usdtAmount).toString() };
@@ -141,6 +158,62 @@ async function refundOrder(prisma, { reference, operator, note }) {
   });
 }
 
+// Read-only — never transitions the order. Runs the same on-chain lookup
+// validateDestinationAddress uses elsewhere, so the operator sees a
+// "here's what we found" readout before deciding to verify or reject.
+// Only meaningful when the customer submitted a tx hash; a screenshot-only
+// claim has nothing to look up (see CLAUDE.md "Sell flow") — the frontend
+// only shows this action when paymentReference is set.
+async function checkDeposit(prisma, { reference }) {
+  const order = await findByReference(prisma, reference);
+  if (!order.paymentReference) {
+    throw new NoDepositReferenceError();
+  }
+
+  const rate = await getSellRate(prisma, order.chain);
+  return verifyDeposit({
+    chain: order.chain,
+    txHash: order.paymentReference,
+    expectedRecipient: rate.depositAddress,
+    minAmountBase: decimalToBigInt(order.usdtAmount),
+  });
+}
+
+async function verifySellDeposit(prisma, { reference, operator }) {
+  const order = await findByReference(prisma, reference);
+  return transitionOrder(prisma, {
+    orderId: order.id,
+    toStatus: 'DEPOSIT_VERIFIED',
+    actorType: 'OPERATOR',
+    actor: `operator:${operator.id}`,
+    note: 'deposit verified',
+  });
+}
+
+async function rejectDeposit(prisma, { reference, operator, reason }) {
+  const order = await findByReference(prisma, reference);
+  return transitionOrder(prisma, {
+    orderId: order.id,
+    toStatus: 'REFUND_DUE',
+    actorType: 'OPERATOR',
+    actor: `operator:${operator.id}`,
+    note: reason,
+    data: { refundReason: reason },
+  });
+}
+
+async function completeSellOrder(prisma, { reference, operator, payoutReference }) {
+  const order = await findByReference(prisma, reference);
+  return transitionOrder(prisma, {
+    orderId: order.id,
+    toStatus: 'COMPLETED',
+    actorType: 'OPERATOR',
+    actor: `operator:${operator.id}`,
+    note: 'MoMo payout sent',
+    data: { payoutReference },
+  });
+}
+
 module.exports = {
   listQueue,
   getOrderDetail,
@@ -148,5 +221,10 @@ module.exports = {
   rejectPayment,
   completeOrder,
   refundOrder,
+  checkDeposit,
+  verifySellDeposit,
+  rejectDeposit,
+  completeSellOrder,
   serializeOrder,
+  NoDepositReferenceError,
 };
