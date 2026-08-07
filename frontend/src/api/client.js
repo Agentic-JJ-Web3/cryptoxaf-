@@ -86,6 +86,15 @@ export const adminApi = {
   logout: () => request('/api/admin/auth/logout', { method: 'POST' }),
   me: () => request('/api/admin/auth/me'),
   listQueue: () => request('/api/admin/orders'),
+  getOrderHistory: (filters = {}) => {
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) params.set(key, value);
+    });
+    const qs = params.toString();
+    return request(`/api/admin/orders/history${qs ? `?${qs}` : ''}`);
+  },
+  getSummary: () => request('/api/admin/summary'),
   getOrder: (reference) => request(`/api/admin/orders/${encodeURIComponent(reference)}`),
   verifyPayment: (reference) =>
     request(`/api/admin/orders/${encodeURIComponent(reference)}/verify-payment`, { method: 'POST' }),
