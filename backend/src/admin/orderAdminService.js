@@ -91,6 +91,38 @@ async function listQueue(prisma, { statuses = QUEUE_STATUSES, limit = 50, offset
   };
 }
 
+// Full ledger, not the queue's "still needs attention" subset — includes
+// terminal orders (COMPLETED/EXPIRED/REFUNDED) the queue deliberately
+// excludes. Newest first, unlike the queue's oldest-first (an operator
+// working the queue wants the stuck one; an operator reviewing history
+// wants what just happened).
+async function listHistory(prisma, { direction, status, dateFrom, dateTo, limit = 50, offset = 0 } = {}) {
+  const where = {
+    ...(direction ? { direction } : {}),
+    ...(status ? { status } : {}),
+    ...(dateFrom || dateTo
+      ? {
+          createdAt: {
+            ...(dateFrom ? { gte: dateFrom } : {}),
+            ...(dateTo ? { lte: dateTo } : {}),
+          },
+        }
+      : {}),
+  };
+
+  const [orders, totalCount] = await Promise.all([
+    prisma.order.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      skip: offset,
+    }),
+    prisma.order.count({ where }),
+  ]);
+
+  return { orders: orders.map(serializeOrder), totalCount };
+}
+
 async function getOrderDetail(prisma, reference) {
   const order = await prisma.order.findUnique({
     where: { reference },
@@ -215,7 +247,10 @@ async function completeSellOrder(prisma, { reference, operator, payoutReference 
 }
 
 module.exports = {
+  QUEUE_STATUSES,
+  ACTIONABLE_STATUSES,
   listQueue,
+  listHistory,
   getOrderDetail,
   verifyPayment,
   rejectPayment,
