@@ -5,9 +5,12 @@
 export function stageFromStatus(status) {
   switch (status) {
     case 'AWAITING_PAYMENT':
+    case 'AWAITING_DEPOSIT':
       return 'waiting';
     case 'PAYMENT_CLAIMED':
     case 'PAYMENT_VERIFIED':
+    case 'DEPOSIT_CLAIMED':
+    case 'DEPOSIT_VERIFIED':
       return 'checking';
     case 'COMPLETED':
       return 'sent';
