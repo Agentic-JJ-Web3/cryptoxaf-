@@ -10,6 +10,7 @@ const { createOrdersRouter: createAdminOrdersRouter } = require('./admin/routes/
 const { createSettingsRouter: createAdminSettingsRouter } = require('./admin/routes/settings');
 const { createNotifyRequestsRouter: createAdminNotifyRequestsRouter } = require('./admin/routes/notify');
 const { createReviewsRouter: createAdminReviewsRouter } = require('./admin/routes/reviews');
+const { createSummaryRouter } = require('./admin/routes/summary');
 const { createQuotesRouter } = require('./customer/routes/quotes');
 const { createOrdersRouter: createCustomerOrdersRouter } = require('./customer/routes/orders');
 const { createNotifyRouter } = require('./customer/routes/notify');
@@ -51,6 +52,7 @@ function createApp({ prisma, jwtSecret, isProduction = false, corsOrigin }) {
   app.use('/api/admin/settings', createAdminSettingsRouter({ prisma, requireAuth }));
   app.use('/api/admin/notify-requests', createAdminNotifyRequestsRouter({ prisma, requireAuth }));
   app.use('/api/admin/reviews', createAdminReviewsRouter({ prisma, requireAuth }));
+  app.use('/api/admin/summary', createSummaryRouter({ prisma, requireAuth }));
 
   app.use('/api/quotes', createQuotesRouter({ prisma }));
   app.use('/api/orders', createCustomerOrdersRouter({ prisma, reviewRateLimit: createReviewRateLimit() }));
