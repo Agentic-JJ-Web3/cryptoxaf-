@@ -1,12 +1,29 @@
 const express = require('express');
 const { z } = require('zod');
 const { createQuoteOrder, claimPayment, getOrderStatus } = require('../customerOrderService');
+const { createSellOrder, claimDeposit } = require('../sellOrderService');
 const { submitReview } = require('../reviewService');
+const { receiptUpload } = require('../../uploads/receiptUpload');
 
 const createOrderSchema = z.object({
   xafAmount: z.number().int().positive(),
   destinationAddress: z.string().trim().min(1),
   bscConfirmed: z.boolean().optional().default(false),
+});
+
+const createSellOrderSchema = z.object({
+  usdtAmount: z.string().trim().min(1, 'Enter a USDT amount'),
+  chain: z.enum(['TRON', 'BSC']),
+  destinationAddress: z.string().trim().min(1),
+  customerMomoNumber: z.string().trim().min(1, 'Enter the MoMo number to receive your payout'),
+  customerMomoNetwork: z.enum(['MTN', 'ORANGE']),
+});
+
+// multipart/form-data always parses body fields as strings — txHash is
+// optional here because a receipt screenshot is a valid alternative (see
+// sellOrderService.claimDeposit, which requires at least one).
+const claimDepositSchema = z.object({
+  txHash: z.string().trim().optional().default(''),
 });
 
 const claimPaymentSchema = z.object({
@@ -29,6 +46,16 @@ function createOrdersRouter({ prisma, reviewRateLimit }) {
     try {
       const input = createOrderSchema.parse(req.body);
       const result = await createQuoteOrder(prisma, input);
+      res.status(201).json(result);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.post('/sell', async (req, res, next) => {
+    try {
+      const input = createSellOrderSchema.parse(req.body);
+      const result = await createSellOrder(prisma, input);
       res.status(201).json(result);
     } catch (err) {
       next(err);
@@ -66,6 +93,20 @@ function createOrdersRouter({ prisma, reviewRateLimit }) {
         reference: req.params.reference,
         momoTxId,
         customerMomoNumber,
+      });
+      res.json({ order });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.post('/:reference/claim-deposit', receiptUpload.single('receipt'), async (req, res, next) => {
+    try {
+      const { txHash } = claimDepositSchema.parse(req.body);
+      const order = await claimDeposit(prisma, {
+        reference: req.params.reference,
+        txHash,
+        receiptImagePath: req.file?.filename || null,
       });
       res.json({ order });
     } catch (err) {

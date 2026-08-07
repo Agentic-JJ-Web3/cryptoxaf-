@@ -1,6 +1,7 @@
 const express = require('express');
 const { z } = require('zod');
 const { previewQuote } = require('../customerOrderService');
+const { previewSellQuote } = require('../sellOrderService');
 const { getMarketRate } = require('../../pricing/rateProvider');
 const { isOpenNow, reopenLabel } = require('../../config/hours');
 
@@ -13,6 +14,13 @@ const previewSchema = z.object({
   destinationAddress: z.string().optional().default(''),
 });
 
+// Same leniency, sell side — chain is an explicit selection here (see
+// CLAUDE.md "Sell flow"), so there's no "before an address" branch to model.
+const sellPreviewSchema = z.object({
+  usdtAmount: z.string().optional().default(''),
+  chain: z.string().optional().default(''),
+});
+
 function createQuotesRouter({ prisma }) {
   const router = express.Router();
 
@@ -20,6 +28,16 @@ function createQuotesRouter({ prisma }) {
     try {
       const { xafAmount, destinationAddress } = previewSchema.parse(req.body);
       const result = await previewQuote(prisma, { xafAmount, destinationAddress });
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.post('/sell-preview', async (req, res, next) => {
+    try {
+      const { usdtAmount, chain } = sellPreviewSchema.parse(req.body);
+      const result = await previewSellQuote(prisma, { usdtAmount, chain });
       res.json(result);
     } catch (err) {
       next(err);
