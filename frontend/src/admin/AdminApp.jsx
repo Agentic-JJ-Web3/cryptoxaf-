@@ -3,6 +3,7 @@ import { AdminAuthProvider, RequireAdminAuth } from './AdminAuthContext';
 import AdminLayout from '../components/AdminLayout';
 import AdminLoginPage from '../pages/admin/AdminLoginPage';
 import AdminQueuePage from '../pages/admin/AdminQueuePage';
+import AdminHistoryPage from '../pages/admin/AdminHistoryPage';
 import AdminOrderDetailPage from '../pages/admin/AdminOrderDetailPage';
 import AdminSettingsPage from '../pages/admin/AdminSettingsPage';
 import AdminNotifyPage from '../pages/admin/AdminNotifyPage';
@@ -21,6 +22,7 @@ export default function AdminApp() {
           }
         >
           <Route path="queue" element={<AdminQueuePage />} />
+          <Route path="history" element={<AdminHistoryPage />} />
           <Route path="orders/:reference" element={<AdminOrderDetailPage />} />
           <Route path="notify-requests" element={<AdminNotifyPage />} />
           <Route path="reviews" element={<AdminReviewsPage />} />
