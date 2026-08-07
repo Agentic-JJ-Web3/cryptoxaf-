@@ -1,11 +1,10 @@
-const { CHAINS } = require('../config/chains');
 const { decimalToBigInt } = require('../db/money');
 const { createOrder, transitionOrder, OrderNotFoundError } = require('../orders/orderService');
 const { expireIfNeeded } = require('../orders/expiry');
 const { generateOrderReference } = require('../orders/reference');
 const { getRate } = require('../pricing/rateProvider');
 const { computeQuote } = require('../pricing/quote');
-const { AmountTooSmallError } = require('../pricing/errors');
+const { AmountTooSmallError, RateUnavailableError } = require('../pricing/errors');
 const {
   validateDestinationAddress,
   detectChainAndShapeError,
@@ -13,6 +12,8 @@ const {
 const { AddressInvalidError, AddressBlockedError } = require('../validation/errors');
 const { isOpenNow, reopenLabel } = require('../config/hours');
 const { InvalidAmountError, BscConfirmationRequiredError, PlatformClosedError } = require('./errors');
+const { serializeOrder } = require('./orderSerializer');
+const { getDepositInstructions } = require('./sellOrderService');
 
 const QUOTE_TTL_MS = 15 * 60 * 1000;
 const MAX_REFERENCE_ATTEMPTS = 5;
@@ -27,46 +28,6 @@ function serializeRate(rate) {
     marketRateMicros: rate.marketRateMicros.toString(),
     targetMarginBps: rate.targetMarginBps,
     quotedRateMicros: rate.quotedRateMicros.toString(),
-  };
-}
-
-function serializeOrder(order) {
-  // Buy's payoutReference is a real on-chain hash — link to it. Sell's is a
-  // MoMo payout confirmation code, never a tx hash, so there's no explorer
-  // link to build.
-  const explorerTxUrl =
-    order.direction === 'BUY' && order.payoutReference
-      ? CHAINS[order.chain].explorerTxUrl(order.payoutReference)
-      : null;
-
-  return {
-    reference: order.reference,
-    status: order.status,
-    direction: order.direction,
-    chain: order.chain,
-    destinationAddress: order.destinationAddress,
-    xafAmount: order.xafAmount,
-    usdtAmount: order.usdtAmount.toString(),
-    paymentReference: order.paymentReference,
-    depositReceiptImagePath: order.depositReceiptImagePath ? true : false,
-    customerMomoNumber: order.customerMomoNumber,
-    customerMomoNetwork: order.customerMomoNetwork,
-    payoutReference: order.payoutReference,
-    explorerTxUrl,
-    refundReason: order.refundReason,
-    // Whether the review prompt should show on the status page — never the
-    // review's own content, this endpoint has no reason to expose that.
-    hasReview: order.review != null,
-    quoteExpiresAt: order.quoteExpiresAt,
-    createdAt: order.createdAt,
-    updatedAt: order.updatedAt,
-    rateSnapshot: order.rateSnapshot
-      ? {
-          marketRateMicros: order.rateSnapshot.marketRateMicros.toString(),
-          networkFeeXaf: order.rateSnapshot.networkFeeXaf,
-          quotedRateMicros: order.rateSnapshot.quotedRateMicros.toString(),
-        }
-      : undefined,
   };
 }
 
@@ -152,6 +113,15 @@ async function previewQuote(prisma, { xafAmount, destinationAddress }) {
     usdtAmount,
     provisional: false,
   };
+}
+
+async function safeDepositInstructions(prisma, chain) {
+  try {
+    return await getDepositInstructions(prisma, chain);
+  } catch (err) {
+    if (err instanceof RateUnavailableError) return null;
+    throw err;
+  }
 }
 
 async function getPaymentInstructions(prisma) {
@@ -277,6 +247,11 @@ async function getOrderStatus(prisma, reference) {
     // Only meaningful pre-payment, but harmless (and one less round trip
     // for the frontend) to include whenever it's still relevant.
     payment: current.status === 'AWAITING_PAYMENT' ? await getPaymentInstructions(prisma) : null,
+    // Sell's mirror of `payment` above — the deposit address to send USDT
+    // to. Swallows RateUnavailableError: an operator turning sell off
+    // (clearing sellMarginBps/deposit address) shouldn't break the status
+    // page for orders already in flight — they placed theirs when it was on.
+    deposit: current.direction === 'SELL' && current.status === 'AWAITING_DEPOSIT' ? await safeDepositInstructions(prisma, current.chain) : null,
   };
 }
 
@@ -286,4 +261,5 @@ module.exports = {
   createQuoteOrder,
   claimPayment,
   getOrderStatus,
+  serializeOrder,
 };
