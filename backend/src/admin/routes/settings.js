@@ -11,6 +11,11 @@ const settingsSchema = z.object({
   momoNetwork: z.enum(['MTN', 'ORANGE']),
   momoNumber: z.string().trim().min(1),
   momoAccountName: z.string().trim().min(1),
+  // Sell fields are all optional — leaving them unset keeps sell
+  // unavailable rather than requiring the operator to configure it now.
+  sellMarginPct: z.number().min(0).max(100).nullable().optional(),
+  sellDepositAddressTron: z.string().trim().optional(),
+  sellDepositAddressBsc: z.string().trim().optional(),
 });
 
 function createSettingsRouter({ prisma, requireAuth }) {
@@ -20,7 +25,11 @@ function createSettingsRouter({ prisma, requireAuth }) {
   router.get('/', async (req, res, next) => {
     try {
       const settings = await settingsService.getSettings(prisma);
-      res.json({ settings, marginClampRangePct: settingsService.MARGIN_CLAMP_RANGE_PCT });
+      res.json({
+        settings,
+        marginClampRangePct: settingsService.MARGIN_CLAMP_RANGE_PCT,
+        sellMarginClampRangePct: settingsService.SELL_MARGIN_CLAMP_RANGE_PCT,
+      });
     } catch (err) {
       next(err);
     }
