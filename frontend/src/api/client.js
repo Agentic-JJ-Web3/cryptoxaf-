@@ -95,6 +95,7 @@ export const adminApi = {
     return request(`/api/admin/orders/history${qs ? `?${qs}` : ''}`);
   },
   getSummary: () => request('/api/admin/summary'),
+  getStats: (days = 30) => request(`/api/admin/stats?days=${encodeURIComponent(days)}`),
   getOrder: (reference) => request(`/api/admin/orders/${encodeURIComponent(reference)}`),
   verifyPayment: (reference) =>
     request(`/api/admin/orders/${encodeURIComponent(reference)}/verify-payment`, { method: 'POST' }),
