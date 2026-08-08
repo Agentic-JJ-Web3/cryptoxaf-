@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "PlatformSettings" ADD COLUMN     "closeHour" INTEGER NOT NULL DEFAULT 21,
+ADD COLUMN     "openHour" INTEGER NOT NULL DEFAULT 7,
+ADD COLUMN     "openWeekdays" INTEGER[] DEFAULT ARRAY[1, 2, 3, 4, 5, 6]::INTEGER[];

@@ -4,6 +4,7 @@
 jest.mock('../src/config/hours', () => ({
   isOpenNow: jest.fn(),
   reopenLabel: jest.fn(() => 'tomorrow at 7:00am'),
+  loadHoursConfig: jest.fn(async () => ({ openHour: 7, closeHour: 21, openWeekdays: [1, 2, 3, 4, 5, 6] })),
 }));
 
 const request = require('supertest');

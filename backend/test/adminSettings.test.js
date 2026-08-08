@@ -29,6 +29,9 @@ const validPayload = {
   momoNetwork: 'MTN',
   momoNumber: '677123456',
   momoAccountName: 'CryptoXAF Operator',
+  openHour: 7,
+  closeHour: 21,
+  openWeekdays: [1, 2, 3, 4, 5, 6],
 };
 
 describe('admin settings routes require authentication', () => {
@@ -153,6 +156,41 @@ describe('PUT /api/admin/settings', () => {
 
     expect(res.status).toBe(400);
   }, 15000);
+
+  test('saves a custom operating-hours schedule', async () => {
+    const app = buildTestApp();
+    const { agent } = await loginAgent(app);
+
+    const res = await agent.put('/api/admin/settings').send({
+      ...validPayload,
+      openHour: 9,
+      closeHour: 18,
+      openWeekdays: [0, 1, 2, 3, 4, 5, 6],
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.settings.openHour).toBe(9);
+    expect(res.body.settings.closeHour).toBe(18);
+    expect(res.body.settings.openWeekdays).toEqual([0, 1, 2, 3, 4, 5, 6]);
+  });
+
+  test('rejects a closing hour at or before the opening hour', async () => {
+    const app = buildTestApp();
+    const { agent } = await loginAgent(app);
+
+    const res = await agent.put('/api/admin/settings').send({ ...validPayload, openHour: 10, closeHour: 10 });
+
+    expect(res.status).toBe(400);
+  });
+
+  test('rejects an empty open-weekdays list', async () => {
+    const app = buildTestApp();
+    const { agent } = await loginAgent(app);
+
+    const res = await agent.put('/api/admin/settings').send({ ...validPayload, openWeekdays: [] });
+
+    expect(res.status).toBe(400);
+  });
 });
 
 describe('getTodayStats USDT normalization', () => {
