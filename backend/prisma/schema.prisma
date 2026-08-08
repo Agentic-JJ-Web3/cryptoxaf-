@@ -193,6 +193,13 @@ model PlatformSettings {
   sellMarginBps          Int?
   sellDepositAddressTron String?
   sellDepositAddressBsc  String?
+  // Operating hours, Africa/Douala (see src/config/hours.js) — admin-editable
+  // replacement for what used to be hardcoded Mon-Sat 7am-9pm constants.
+  // closeHour is exclusive, same convention as the old constants. Defaults
+  // reproduce the old hardcoded schedule. 0=Sun..6=Sat in openWeekdays.
+  openHour     Int   @default(7)
+  closeHour    Int   @default(21)
+  openWeekdays Int[] @default([1, 2, 3, 4, 5, 6])
   updatedAt         DateTime    @updatedAt
   updatedBy         String?
 }
