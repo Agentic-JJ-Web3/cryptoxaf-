@@ -3,7 +3,7 @@ const { z } = require('zod');
 const { previewQuote } = require('../customerOrderService');
 const { previewSellQuote } = require('../sellOrderService');
 const { getMarketRate } = require('../../pricing/rateProvider');
-const { isOpenNow, reopenLabel } = require('../../config/hours');
+const { isOpenNow, reopenLabel, loadHoursConfig } = require('../../config/hours');
 
 // Deliberately lenient: this backs live typing on the swap screen, where
 // "amount not entered yet" or "address incomplete" are normal in-progress
@@ -48,14 +48,14 @@ function createQuotesRouter({ prisma }) {
   // customer has typed anything — chain-agnostic, so no address required.
   router.get('/market', async (req, res, next) => {
     try {
-      const rate = await getMarketRate(prisma);
+      const [rate, hours] = await Promise.all([getMarketRate(prisma), loadHoursConfig(prisma)]);
       res.json({
         marketRateMicros: rate.marketRateMicros.toString(),
         tronNetworkFeeXaf: rate.tronNetworkFeeXaf,
         bscNetworkFeeXaf: rate.bscNetworkFeeXaf,
         updatedAt: rate.updatedAt,
-        isOpen: isOpenNow(),
-        reopenLabel: reopenLabel(),
+        isOpen: isOpenNow(hours),
+        reopenLabel: reopenLabel(hours),
       });
     } catch (err) {
       next(err);
