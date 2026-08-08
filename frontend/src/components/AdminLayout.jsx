@@ -30,6 +30,9 @@ function NavLinks({ summary, onNavigate }) {
       <NavLink to="/admin/history" className={navLinkClass} onClick={onNavigate}>
         <span>History</span>
       </NavLink>
+      <NavLink to="/admin/stats" className={navLinkClass} onClick={onNavigate}>
+        <span>Stats</span>
+      </NavLink>
       <NavLink to="/admin/reviews" className={navLinkClass} onClick={onNavigate}>
         <span>Reviews</span>
         <Badge count={summary?.pendingReviews} />
