@@ -8,7 +8,7 @@ const { computeSellQuote } = require('../pricing/quote');
 const { AmountTooSmallError } = require('../pricing/errors');
 const { validateDestinationAddress } = require('../validation/address');
 const { AddressInvalidError } = require('../validation/errors');
-const { isOpenNow, reopenLabel } = require('../config/hours');
+const { isOpenNow, reopenLabel, loadHoursConfig } = require('../config/hours');
 const {
   InvalidUsdtAmountError,
   PlatformClosedError,
@@ -89,8 +89,9 @@ async function createOrderWithUniqueReference(prisma, buildData) {
 // a refund-safety-net if the deposit is ever rejected, never a payout
 // target for sell. Validated the same way a buy-side payout address is.
 async function createSellOrder(prisma, { usdtAmount, chain, destinationAddress, customerMomoNumber, customerMomoNetwork }) {
-  if (!isOpenNow()) {
-    throw new PlatformClosedError(reopenLabel());
+  const hours = await loadHoursConfig(prisma);
+  if (!isOpenNow(hours)) {
+    throw new PlatformClosedError(reopenLabel(hours));
   }
   if (!CHAINS[chain]) {
     throw new InvalidUsdtAmountError();

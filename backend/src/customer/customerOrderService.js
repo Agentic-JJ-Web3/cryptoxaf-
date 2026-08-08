@@ -10,7 +10,7 @@ const {
   detectChainAndShapeError,
 } = require('../validation/address');
 const { AddressInvalidError, AddressBlockedError } = require('../validation/errors');
-const { isOpenNow, reopenLabel } = require('../config/hours');
+const { isOpenNow, reopenLabel, loadHoursConfig } = require('../config/hours');
 const { InvalidAmountError, BscConfirmationRequiredError, PlatformClosedError } = require('./errors');
 const { serializeOrder } = require('./orderSerializer');
 const { getDepositInstructions } = require('./sellOrderService');
@@ -151,10 +151,9 @@ async function createOrderWithUniqueReference(prisma, buildData) {
 // "Continue to payment". Re-validates everything the preview already
 // showed, since client-side state is never trusted for order creation.
 async function createQuoteOrder(prisma, { xafAmount, destinationAddress, bscConfirmed }) {
-  // Cheapest possible check first — no RPC or DB work wasted on an order
-  // that can't be placed at all right now.
-  if (!isOpenNow()) {
-    throw new PlatformClosedError(reopenLabel());
+  const hours = await loadHoursConfig(prisma);
+  if (!isOpenNow(hours)) {
+    throw new PlatformClosedError(reopenLabel(hours));
   }
 
   if (!isPositiveInteger(xafAmount)) {
