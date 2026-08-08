@@ -16,6 +16,12 @@ const settingsSchema = z.object({
   sellMarginPct: z.number().min(0).max(100).nullable().optional(),
   sellDepositAddressTron: z.string().trim().optional(),
   sellDepositAddressBsc: z.string().trim().optional(),
+  openHour: z.number().int().min(0).max(23),
+  closeHour: z.number().int().min(0).max(23),
+  openWeekdays: z.array(z.number().int().min(0).max(6)).min(1, 'Pick at least one open day'),
+}).refine((data) => data.closeHour > data.openHour, {
+  message: 'Closing hour must be after opening hour',
+  path: ['closeHour'],
 });
 
 function createSettingsRouter({ prisma, requireAuth }) {
