@@ -14,7 +14,18 @@ const EMPTY_DRAFT = {
   sellMarginPct: null,
   sellDepositAddressTron: '',
   sellDepositAddressBsc: '',
+  openHour: 7,
+  closeHour: 21,
+  openWeekdays: [1, 2, 3, 4, 5, 6],
 };
+
+const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+function formatHourOption(hour) {
+  const period = hour < 12 ? 'am' : 'pm';
+  const hour12 = hour % 12 === 0 ? 12 : hour % 12;
+  return `${hour12}:00${period}`;
+}
 
 function draftFromSettings(settings) {
   if (!settings) return EMPTY_DRAFT;
@@ -30,6 +41,9 @@ function draftFromSettings(settings) {
     sellMarginPct,
     sellDepositAddressTron,
     sellDepositAddressBsc,
+    openHour,
+    closeHour,
+    openWeekdays,
   } = settings;
   return {
     xafUsdtRate,
@@ -43,6 +57,9 @@ function draftFromSettings(settings) {
     sellMarginPct: sellMarginPct ?? null,
     sellDepositAddressTron: sellDepositAddressTron || '',
     sellDepositAddressBsc: sellDepositAddressBsc || '',
+    openHour,
+    closeHour,
+    openWeekdays,
   };
 }
 
@@ -90,6 +107,15 @@ export default function AdminSettingsPage() {
   function update(field, value) {
     setJustSaved(false);
     setDraft((d) => ({ ...d, [field]: value }));
+  }
+
+  function toggleWeekday(day) {
+    setJustSaved(false);
+    setDraft((d) => {
+      const has = d.openWeekdays.includes(day);
+      const next = has ? d.openWeekdays.filter((w) => w !== day) : [...d.openWeekdays, day].sort();
+      return { ...d, openWeekdays: next };
+    });
   }
 
   const isDirty = JSON.stringify(draft) !== JSON.stringify(live);
@@ -227,7 +253,7 @@ export default function AdminSettingsPage() {
         </Field>
       </Section>
 
-      <Section title="Sell (USDT → XAF)" last>
+      <Section title="Sell (USDT → XAF)">
         <div
           className="mb-3.5 rounded-md border px-3 py-2 text-[11px] font-semibold"
           style={{
@@ -275,6 +301,69 @@ export default function AdminSettingsPage() {
         <p className="text-xs text-muted">
           These are the platform's own wallets — customers send USDT here. Validated the same way a customer's
           destination address is when you save.
+        </p>
+      </Section>
+
+      <Section title="Operating hours" last>
+        <div className="grid grid-cols-2 gap-2.5">
+          <Field label="Opens">
+            <select
+              value={draft.openHour}
+              onChange={(e) => update('openHour', parseInt(e.target.value, 10))}
+              className="w-full border-0 bg-transparent text-[15px] font-medium text-ink outline-none"
+            >
+              {Array.from({ length: 24 }, (_, h) => (
+                <option key={h} value={h}>
+                  {formatHourOption(h)}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Closes">
+            <select
+              value={draft.closeHour}
+              onChange={(e) => update('closeHour', parseInt(e.target.value, 10))}
+              className="w-full border-0 bg-transparent text-[15px] font-medium text-ink outline-none"
+            >
+              {Array.from({ length: 24 }, (_, h) => (
+                <option key={h} value={h}>
+                  {formatHourOption(h)}
+                </option>
+              ))}
+            </select>
+          </Field>
+        </div>
+        {draft.closeHour <= draft.openHour && (
+          <div className="mb-3.5 -mt-2 text-[11px] text-fault">Closing time must be after opening time.</div>
+        )}
+
+        <span className="mb-1.5 block text-xs text-muted">Open days</span>
+        <div className="mb-1 flex flex-wrap gap-1.5">
+          {WEEKDAY_LABELS.map((label, day) => {
+            const isOpen = draft.openWeekdays.includes(day);
+            return (
+              <button
+                key={label}
+                type="button"
+                onClick={() => toggleWeekday(day)}
+                className="rounded-md border px-3 py-2 text-xs font-semibold"
+                style={{
+                  borderColor: isOpen ? 'var(--vault)' : 'var(--rule)',
+                  color: isOpen ? 'var(--vault)' : 'var(--muted)',
+                  boxShadow: isOpen ? 'inset 0 0 0 1px var(--vault)' : 'none',
+                }}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+        {draft.openWeekdays.length === 0 && (
+          <div className="mt-1.5 text-[11px] text-fault">Pick at least one open day.</div>
+        )}
+        <p className="mt-3 text-xs text-muted">
+          Africa/Douala time. Outside these hours the swap and sell screens show "closed" and quoting refuses new
+          orders — orders already placed keep settling on the operator's own schedule.
         </p>
       </Section>
 
