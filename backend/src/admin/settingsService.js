@@ -44,6 +44,9 @@ function serialize(settings) {
     sellDepositAddressTron: settings.sellDepositAddressTron,
     sellDepositAddressBsc: settings.sellDepositAddressBsc,
     sellAvailable: sellConfigured && !!settings.sellDepositAddressTron && !!settings.sellDepositAddressBsc,
+    openHour: settings.openHour,
+    closeHour: settings.closeHour,
+    openWeekdays: settings.openWeekdays,
     updatedAt: settings.updatedAt,
     updatedBy: settings.updatedBy,
   };
@@ -89,6 +92,9 @@ async function updateSettings(prisma, { operator, data, ip, userAgent }) {
     sellMarginBps: data.sellMarginPct == null ? null : Math.round(data.sellMarginPct * 100),
     sellDepositAddressTron,
     sellDepositAddressBsc,
+    openHour: data.openHour,
+    closeHour: data.closeHour,
+    openWeekdays: data.openWeekdays,
     updatedBy: `operator:${operator.id}`,
   };
 
